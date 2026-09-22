@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# next.js build output
+.next/
+out/
+
+# env files — secrets, never commit
+.env
+.env.local
+.env*.local
+.env.development
+.env.production
+
+# local sqlite database — contains real user data (emails, password hashes)
+*.db
+*.db-journal
+prisma/*.db
+prisma/dev.db
+
+# user-uploaded media — will move to Vercel Blob, not source code
+public/uploads/
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+
+# vercel
+.vercel

@@ -1,0 +1,197 @@
+// Buraaq Times CMS — data model.
+//
+// Defaults to SQLite so the project runs with zero external setup
+// (`npx prisma db push` creates prisma/dev.db). To use Postgres instead —
+// as the original brief specifies — change `provider` below to
+// "postgresql" and point DATABASE_URL at your instance; the schema itself
+// needs no other changes since it deliberately avoids native Postgres-only
+// types (see the comment on `role`/`status` below).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Roles/statuses are plain strings rather than native enums so the same
+// schema works unmodified on SQLite (dev) and Postgres (production).
+// Valid values are enforced in application code — see lib/auth.ts.
+// role:   "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR"
+// status: "PENDING" | "APPROVED" | "REJECTED"
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  status       String   @default("PENDING")
+  bio          String?
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  // Email verification
+  emailVerified      Boolean   @default(false)
+  emailVerifyToken   String?   @unique
+  emailVerifyExpires DateTime?
+
+  // Forgot / reset password
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
+  // Two-factor authentication (TOTP, RFC 6238) — user-enabled, optional.
+  totpSecret  String?
+  totpEnabled Boolean @default(false)
+
+  posts         Post[]
+  media         Media[]
+  revisions     PostRevision[]
+  notifications Notification[]
+}
+
+// type:   "news" | "article"
+// status: "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED"
+model Post {
+  id          String    @id @default(cuid())
+  type        String
+  title       String
+  slug        String    @unique
+  summary     String
+  bodyHtml    String
+  status      String    @default("DRAFT")
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  featuredImageUrl String?
+  featuredImageAlt String?
+
+  // Auto-generated branded exports (logo + category + headline overlay),
+  // regenerated on demand from the Featured Image panel.
+  brandedFeaturedImageUrl String?
+  brandedSocialImageUrl   String?
+
+  // AI SEO Assistant fields — all editable before publish.
+  seoTitle           String?
+  seoDescription     String?
+  focusKeyword       String?
+  secondaryKeywords  String?
+  ogDescription      String?
+  twitterDescription String?
+  slugSuggestion     String?
+  readabilityScore   Int?
+  seoScore           Int?
+
+  readTimeMinutes Int @default(3)
+  views           Int @default(0)
+  likeCount       Int @default(0)
+  saveCount       Int @default(0)
+
+  // Homepage curation — editors control these explicitly rather than the
+  // public site guessing; adapter falls back to "most recent" if none are
+  // set for a given content type so the homepage never looks empty.
+  featured    Boolean @default(false)
+  trending    Boolean @default(false)
+  editorsPick Boolean @default(false)
+
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  tags       Tag[]     @relation("PostTags")
+
+  comments  Comment[]
+  revisions PostRevision[]
+  reactions PostReaction[]
+
+  @@index([type, status])
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  posts Post[] @relation("PostTags")
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  url          String
+  originalUrl  String?
+  filename     String
+  mimeType     String
+  size         Int
+  altText      String?
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+// status: "PENDING" | "APPROVED" | "REJECTED" | "SPAM"
+model Comment {
+  id          String   @id @default(cuid())
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName  String
+  authorEmail String
+  body        String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+
+  // Spam detection — heuristic score always computed; AI review is best-effort
+  // (only runs when ANTHROPIC_API_KEY is set) and is advisory, shown to
+  // moderators rather than silently auto-deleting anything.
+  spamScore  Int     @default(0)
+  spamReason String?
+}
+
+// One row per (post, anonymous visitor, reaction type) — the unique
+// constraint makes Like/Save idempotent per visitor and lets a returning
+// visitor's button render already filled-in, with no login required.
+model PostReaction {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  visitorId String
+  type      String // "LIKE" | "SAVE"
+  createdAt DateTime @default(now())
+
+  @@unique([postId, visitorId, type])
+  @@index([postId, type])
+}
+
+// Lightweight version history — a snapshot is written on every save.
+model PostRevision {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  title     String
+  bodyHtml  String
+  editorId  String
+  editor    User     @relation(fields: [editorId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// type: "PUBLISH_CONFIRMATION" | "COMMENT_ALERT" | "SEO_ALERT" | "ACCOUNT" | "DRAFT_REMINDER" | "SYSTEM"
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}

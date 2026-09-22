@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+/* Accent colors — blue in light mode, gold in dark mode.
+   Values are space-separated RGB channels so Tailwind's /opacity
+   modifiers (e.g. bg-signal/10) keep working. */
+:root {
+  --accent: 47 107 255;
+  --accent-2: 34 211 238;
+  --accent-2-deep: 14 165 196;
+}
+
+.dark {
+  --accent: 246 167 0;
+  --accent-2: 247 13 40;
+  --accent-2-deep: 214 140 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  @apply bg-paper/95 text-ink font-body antialiased transition-colors duration-500;
+}
+
+.dark body {
+  @apply bg-void/95 text-white;
+}
+
+/* Liquid glass surface — the core signature material of the site */
+.glass {
+  @apply relative rounded-glass border border-black/[0.06] bg-white/60 backdrop-blur-glass shadow-glass;
+}
+
+.dark .glass {
+  @apply border-white/[0.08] bg-white/[0.04] shadow-glass-dark;
+}
+
+.glass-strong {
+  @apply relative rounded-glass border border-black/[0.08] bg-white/80 backdrop-blur-glass shadow-glass;
+}
+
+.dark .glass-strong {
+  @apply border-white/10 bg-white/[0.07] shadow-glass-dark;
+}
+
+.glass-pill {
+  @apply relative rounded-full border border-black/[0.08] bg-white/80 backdrop-blur-glass shadow-glass;
+}
+
+.dark .glass-pill {
+  @apply border-white/10 bg-white/[0.07] shadow-glass-dark;
+}
+
+/* Aurora mesh — ambient, alive background layer */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  filter: blur(80px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.dark .aurora {
+  opacity: 0.4;
+}
+
+.aurora-blob {
+  position: absolute;
+  border-radius: 999px;
+  animation: aurora-shift 18s ease-in-out infinite;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(120deg, rgb(var(--accent)), rgb(var(--accent-2)));
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid #2f6bff;
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}
+
+::selection {
+  background: rgba(47, 107, 255, 0.25);
+}
+
+/* thin scrollbar for horizontal rails */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(47, 107, 255, 0.35);
+  border-radius: 999px;
+}
+
+@keyframes brand-sway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0px);
+    filter: brightness(1);
+  }
+  50% {
+    transform: rotate(-1.2deg) translateY(-1px);
+    filter: brightness(1.04);
+  }
+}
+
+.brand-mark-idle {
+  animation: brand-sway 6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark-idle {
+    animation: none;
+  }
+}
+
+@keyframes brand-sway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0px);
+    filter: brightness(1);
+  }
+  50% {
+    transform: rotate(-1.2deg) translateY(-1px);
+    filter: brightness(1.04);
+  }
+}
+
+.brand-mark-idle {
+  animation: brand-sway 6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark-idle {
+    animation: none;
+  }
+}
+
+@keyframes brand-sway {
+  0%, 100% {
+    transform: rotate(0deg) translateY(0px);
+    filter: brightness(1);
+  }
+  50% {
+    transform: rotate(-1.2deg) translateY(-1px);
+    filter: brightness(1.04);
+  }
+}
+
+.brand-mark-idle {
+  animation: brand-sway 6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark-idle {
+    animation: none;
+  }
+}
+
+@keyframes feather-progress-sway {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(-8deg) translateY(-1px); }
+}
+
+.feather-progress-idle {
+  animation: feather-progress-sway 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feather-progress-idle {
+    animation: none;
+  }
+}
