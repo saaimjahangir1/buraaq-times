@@ -97,7 +97,7 @@ export default function MediaPicker({
               onClick={() => onSelect(m.url, m.altText || "")}
               className="focus-ring group relative aspect-square overflow-hidden rounded-xl border border-white/10"
             >
-              <Image src={m.url} alt={m.altText || ""} fill className="object-cover transition group-hover:scale-105" />
+              <Image src={m.url} alt={m.altText || ""} fill unoptimized className="object-cover transition group-hover:scale-105" />
             </button>
           ))}
         </div>

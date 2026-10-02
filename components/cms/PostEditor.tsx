@@ -426,7 +426,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
           <p className="mb-3 font-display text-sm font-bold text-white">Featured Image</p>
           {featuredImageUrl ? (
             <div className="relative mb-2 aspect-video overflow-hidden rounded-xl">
-              <NextImage src={featuredImageUrl} alt={featuredImageAlt} fill className="object-cover" />
+              <NextImage src={featuredImageUrl} alt={featuredImageAlt} fill unoptimized className="object-cover" />
               <button
                 onClick={() => {
                   setFeaturedImageUrl("");
@@ -494,13 +494,13 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <div>
                     <div className="relative aspect-video overflow-hidden rounded-lg">
-                      <NextImage src={brandedFeaturedImageUrl} alt="Branded hero preview" fill className="object-cover" />
+                      <NextImage src={brandedFeaturedImageUrl} alt="Branded hero preview" fill unoptimized className="object-cover" />
                     </div>
                     <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Hero (16:9)</p>
                   </div>
                   <div>
                     <div className="relative aspect-[4/5] overflow-hidden rounded-lg">
-                      <NextImage src={brandedSocialImageUrl} alt="Branded social preview" fill className="object-cover" />
+                      <NextImage src={brandedSocialImageUrl} alt="Branded social preview" fill unoptimized className="object-cover" />
                     </div>
                     <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Social (4:5)</p>
                   </div>

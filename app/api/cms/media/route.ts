@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
 import { smartCropTo16x9, shouldSkipCropping } from "@/lib/image-processing";
+import { uploadToBlob } from "@/lib/blob-storage";
 
 const MAX_SIZE = 8 * 1024 * 1024;
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
@@ -44,17 +44,10 @@ export async function POST(req: NextRequest) {
   let ext = path.extname(file.name) || "";
   let originalUrl: string | null = null;
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   if (crop && !shouldSkipCropping(file.type)) {
     try {
-      // Keep the pre-crop original too — the 16:9 crop is what the site
-      // displays, but building other aspect ratios later (branded social
-      // image) needs the full, uncropped source to avoid upscaling.
       const originalFilename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-original${ext}`;
-      await writeFile(path.join(uploadDir, originalFilename), bytes);
-      originalUrl = `/uploads/${originalFilename}`;
+      originalUrl = await uploadToBlob(bytes, originalFilename, mimeType);
 
       const cropped = await smartCropTo16x9(bytes);
       bytes = cropped.buffer;
@@ -67,11 +60,11 @@ export async function POST(req: NextRequest) {
   }
 
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-  await writeFile(path.join(uploadDir, filename), bytes);
+  const url = await uploadToBlob(bytes, filename, mimeType);
 
   const media = await prisma.media.create({
     data: {
-      url: `/uploads/${filename}`,
+      url,
       originalUrl,
       filename: file.name,
       mimeType,

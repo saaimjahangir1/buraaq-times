@@ -13,7 +13,12 @@ export function generateCsrfToken(): string {
 export function setCsrfCookie(res: NextResponse, token: string) {
   res.cookies.set(CSRF_COOKIE, token, {
     httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
+    // No HTTPS on this VPS yet — see the identical fix in lib/session.ts
+    // and lib/visitor.ts. Flip back once TLS is set up.
+    // VERCEL_ENV is set automatically only on real Vercel deployments
+    // (guaranteed HTTPS there). NODE_ENV alone isn't a safe signal — this
+    // VPS also runs in "production" mode via `next start`, with no TLS.
+    secure: process.env.VERCEL_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 30,

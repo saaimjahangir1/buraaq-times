@@ -1,5 +1,6 @@
 import { getSession, canAccessType, Role } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FileText, CheckCircle2, Clock, Archive, Users, MessageSquare, TrendingUp } from "lucide-react";
 
@@ -31,7 +32,8 @@ function StatCard({
 
 export default async function CmsOverviewPage() {
   const session = await getSession();
-  const role = session!.role as Role;
+  if (!session) redirect("/cms/login");
+  const role = session.role as Role;
 
   const typeFilter =
     role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
@@ -51,13 +53,13 @@ export default async function CmsOverviewPage() {
       role === "ADMIN" ? prisma.user.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
       role === "ADMIN"
         ? prisma.comment.count({ where: { status: "PENDING" } })
-        : prisma.comment.count({ where: { status: "PENDING", post: { authorId: session!.sub } } }),
+        : prisma.comment.count({ where: { status: "PENDING", post: { authorId: session.sub } } }),
     ]);
 
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-white">
-        Welcome back, {session!.name.split(" ")[0]}
+        Welcome back, {session.name.split(" ")[0]}
       </h1>
       <p className="mt-1 text-sm text-white/50">Here&apos;s what&apos;s happening in the newsroom.</p>
 

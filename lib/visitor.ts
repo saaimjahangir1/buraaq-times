@@ -27,7 +27,10 @@ export function getOrCreateVisitorId(): string {
     // on port 80) — a Secure cookie would be silently dropped by every
     // browser, breaking Like/Save de-duplication entirely. Flip this back
     // to `process.env.NODE_ENV === "production"` once TLS is set up.
-    secure: false,
+    // VERCEL_ENV is set automatically only on real Vercel deployments
+    // (guaranteed HTTPS there). NODE_ENV alone isn't a safe signal — this
+    // VPS also runs in "production" mode via `next start`, with no TLS.
+    secure: process.env.VERCEL_ENV === "production",
     sameSite: "lax",
     maxAge: MAX_AGE,
     path: "/",

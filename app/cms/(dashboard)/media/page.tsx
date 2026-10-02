@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Upload, Loader2, Copy, Check } from "lucide-react";
+import { Upload, Loader2, Copy, Check, Trash2 } from "lucide-react";
 import { cmsFetch } from "@/lib/cms-fetch";
 
 interface MediaItem {
@@ -21,6 +21,7 @@ export default function CmsMediaPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -51,6 +52,23 @@ export default function CmsMediaPage() {
     navigator.clipboard?.writeText(window.location.origin + item.url);
     setCopiedId(item.id);
     setTimeout(() => setCopiedId(null), 1500);
+  };
+
+  const remove = async (item: MediaItem) => {
+    if (!confirm(`Delete "${item.filename}"? This can't be undone.`)) return;
+    setDeletingId(item.id);
+    try {
+      const res = await cmsFetch(`/api/cms/media/${item.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Delete failed");
+      }
+      setItems((prev) => prev.filter((m) => m.id !== item.id));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -86,18 +104,32 @@ export default function CmsMediaPage() {
         {items.map((m) => (
           <div key={m.id} className="glass overflow-hidden rounded-glass">
             <div className="relative aspect-square">
-              <Image src={m.url} alt={m.altText || ""} fill className="object-cover" />
+              <Image src={m.url} alt={m.altText || ""} fill unoptimized className="object-cover" />
             </div>
             <div className="p-2.5">
               <p className="truncate text-xs text-white/70">{m.filename}</p>
               <p className="text-[10px] text-white/30">{(m.size / 1024).toFixed(0)} KB</p>
-              <button
-                onClick={() => copy(m)}
-                className="focus-ring mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[11px] text-white/60 hover:bg-white/10"
-              >
-                {copiedId === m.id ? <Check size={11} /> : <Copy size={11} />}
-                {copiedId === m.id ? "Copied" : "Copy URL"}
-              </button>
+              <div className="mt-1.5 flex gap-1">
+                <button
+                  onClick={() => copy(m)}
+                  className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[11px] text-white/60 hover:bg-white/10"
+                >
+                  {copiedId === m.id ? <Check size={11} /> : <Copy size={11} />}
+                  {copiedId === m.id ? "Copied" : "Copy URL"}
+                </button>
+                <button
+                  onClick={() => remove(m)}
+                  disabled={deletingId === m.id}
+                  aria-label={`Delete ${m.filename}`}
+                  className="focus-ring flex items-center justify-center rounded-lg bg-red-500/10 px-2.5 py-1.5 text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+                >
+                  {deletingId === m.id ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={12} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ))}

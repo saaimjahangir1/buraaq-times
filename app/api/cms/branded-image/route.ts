@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
 import { generateBrandedImages } from "@/lib/image-processing";
+import { uploadToBlob, isBlobUrl } from "@/lib/blob-storage";
 
 const schema = z.object({
   sourceUrl: z.string().min(1),
@@ -22,7 +21,7 @@ export async function POST(req: NextRequest) {
   }
   const { sourceUrl, title, categoryId } = parsed.data;
 
-  if (!sourceUrl.startsWith("/uploads/") || sourceUrl.includes("..")) {
+  if (!isBlobUrl(sourceUrl)) {
     return NextResponse.json({ error: "Invalid source image" }, { status: 400 });
   }
 
@@ -32,16 +31,17 @@ export async function POST(req: NextRequest) {
     if (category) categoryName = category.name;
   }
 
-  // Prefer the pre-crop original on record so the portrait export isn't
-  // upscaled from an already-16:9-cropped source.
   const mediaRow = await prisma.media.findFirst({ where: { url: sourceUrl } });
   const effectiveSourceUrl = mediaRow?.originalUrl || sourceUrl;
 
   let sourceBytes: Buffer;
   try {
-    sourceBytes = await readFile(path.join(process.cwd(), "public", effectiveSourceUrl));
-  } catch {
-    return NextResponse.json({ error: "Source image not found on disk" }, { status: 404 });
+    const res = await fetch(effectiveSourceUrl);
+    if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+    sourceBytes = Buffer.from(await res.arrayBuffer());
+  } catch (err) {
+    console.error("Could not fetch source image from Blob:", err);
+    return NextResponse.json({ error: "Source image not found" }, { status: 404 });
   }
 
   let generated;
@@ -52,18 +52,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to generate branded images" }, { status: 500 });
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-
   const stamp = Date.now();
   const heroFilename = `${stamp}-${Math.random().toString(36).slice(2, 8)}-branded-hero.jpg`;
   const socialFilename = `${stamp}-${Math.random().toString(36).slice(2, 8)}-branded-social.jpg`;
 
-  await writeFile(path.join(uploadDir, heroFilename), generated.hero.buffer);
-  await writeFile(path.join(uploadDir, socialFilename), generated.social.buffer);
-
-  const heroUrl = `/uploads/${heroFilename}`;
-  const socialUrl = `/uploads/${socialFilename}`;
+  const [heroUrl, socialUrl] = await Promise.all([
+    uploadToBlob(generated.hero.buffer, heroFilename, "image/jpeg"),
+    uploadToBlob(generated.social.buffer, socialFilename, "image/jpeg"),
+  ]);
 
   await prisma.media.createMany({
     data: [
