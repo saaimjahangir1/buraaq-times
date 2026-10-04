@@ -5,6 +5,7 @@ interface MailInput {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
 }
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
@@ -30,12 +31,18 @@ function getTransporter() {
  * surface the content directly (e.g. in a dev-only API response) when
  * nothing was actually delivered.
  */
-export async function sendMail({ to, subject, html }: MailInput): Promise<{ sent: boolean }> {
+export async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ sent: boolean }> {
   const t = getTransporter();
   if (!t) {
     console.log(`\n[mailer] SMTP not configured — would have sent:\nTo: ${to}\nSubject: ${subject}\n${html}\n`);
     return { sent: false };
   }
-  await t.sendMail({ from: process.env.SMTP_FROM || "Buraaq Times <no-reply@buraaqtimes.example>", to, subject, html });
+  await t.sendMail({
+    from: process.env.SMTP_FROM || "Buraaq Times <no-reply@buraaqtimes.example>",
+    to,
+    subject,
+    html,
+    ...(replyTo ? { replyTo } : {}),
+  });
   return { sent: true };
 }

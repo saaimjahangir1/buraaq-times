@@ -69,7 +69,14 @@ export async function GET(req: NextRequest) {
   }
 
   if (status) where.status = status;
-  if (mine) where.authorId = guard.id;
+  if (guard.role !== "ADMIN") {
+    // Non-admins only ever see their own posts — `mine` stays available
+    // for admins who want that view, but can't be used to see anyone
+    // else's content regardless of what a non-admin's client sends.
+    where.authorId = guard.id;
+  } else if (mine) {
+    where.authorId = guard.id;
+  }
   if (q) {
     where.OR = [
       { title: { contains: q } },

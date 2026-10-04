@@ -13,6 +13,7 @@ export async function GET() {
   if (isNextResponse(guard)) return guard;
 
   const media = await prisma.media.findMany({
+    where: guard.role === "ADMIN" ? {} : { uploadedById: guard.id },
     orderBy: { createdAt: "desc" },
     include: { uploadedBy: { select: { name: true } } },
     take: 200,

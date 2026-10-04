@@ -11,6 +11,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   const media = await prisma.media.findUnique({ where: { id: params.id } });
   if (!media) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (guard.role !== "ADMIN" && media.uploadedById !== guard.id) {
+    return NextResponse.json({ error: "Not your upload" }, { status: 403 });
+  }
 
   // Handles both Blob URLs (current) and legacy local /uploads/ URLs, in
   // case anything wasn't migrated yet when this runs.

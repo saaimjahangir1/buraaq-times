@@ -52,6 +52,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     include: { category: true, tags: true, author: { select: { name: true } } },
   });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (guard.role !== "ADMIN" && post.authorId !== guard.id) {
+    return NextResponse.json({ error: "Not your post" }, { status: 403 });
+  }
   return NextResponse.json({ post });
 }
 

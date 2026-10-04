@@ -22,11 +22,11 @@ const ACCENT_SOFT = "rgb(var(--accent) / 0.12)";
 const ACCENT_GLOW = "rgb(var(--accent) / 0.4)";
 
 const SOCIALS = [
-  { icon: Facebook, label: "Facebook", href: "#" },
+  { icon: Facebook, label: "Facebook", href: "https://web.facebook.com/buraaqtimes" },
   { icon: null, label: "X", href: "#" },
-  { icon: Instagram, label: "Instagram", href: "#" },
+  { icon: Instagram, label: "Instagram", href: "https://www.instagram.com/buraaqtimes/" },
   { icon: Youtube, label: "YouTube", href: "#" },
-  { icon: Linkedin, label: "LinkedIn", href: "#" },
+  { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/company/82151810/" },
 ];
 
 const CARDS = [
