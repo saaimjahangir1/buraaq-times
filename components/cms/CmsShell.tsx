@@ -121,7 +121,7 @@ export default function CmsShell({
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-white/10 bg-white/[0.02] p-5 md:flex">
         {SidebarContent}
@@ -129,9 +129,9 @@ export default function CmsShell({
 
       {/* Mobile topbar + drawer */}
       <div className="flex flex-1 flex-col md:hidden">
-        <div className="flex items-center justify-between border-b border-white/10 p-4">
-          <span className="font-display font-bold text-white">Buraaq Times CMS</span>
-          <div className="flex items-center gap-1">
+        <div className="flex min-w-0 items-center justify-between gap-2 border-b border-white/10 p-4">
+          <span className="truncate font-display font-bold text-white">Buraaq Times CMS</span>
+          <div className="flex shrink-0 items-center gap-1">
             <NotificationBell />
             <button onClick={() => setMobileOpen(true)} className="focus-ring rounded-lg p-2 text-white">
               <Menu size={20} />
