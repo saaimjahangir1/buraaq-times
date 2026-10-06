@@ -29,6 +29,12 @@ export default function Select({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // When the list opens inside a scrolling panel, bring it into view.
+  useEffect(() => {
+    if (open) listRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [open]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -54,7 +60,11 @@ export default function Select({
       </button>
 
       {open && (
-        <div className="glass-strong absolute inset-x-0 top-full z-50 mt-1.5 max-h-64 overflow-y-auto rounded-xl p-1.5">
+        <div
+          ref={listRef}
+          data-lenis-prevent
+          className="glass-strong absolute inset-x-0 top-full z-50 mt-1.5 max-h-64 overflow-y-auto overscroll-contain rounded-xl p-1.5 [scrollbar-width:thin]"
+        >
           {options.length === 0 && (
             <p className="px-3 py-2 text-sm text-ink/40 dark:text-white/40">No options available.</p>
           )}

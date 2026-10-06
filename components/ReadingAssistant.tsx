@@ -240,7 +240,10 @@ export default function ReadingAssistant({
               ))}
             </div>
 
-            <div className="max-h-72 overflow-y-auto text-sm text-ink/80 dark:text-white/80">
+            <div
+              data-lenis-prevent
+              className="max-h-72 overflow-y-auto overscroll-contain text-sm text-ink/80 [scrollbar-width:thin] dark:text-white/80"
+            >
               {tab === "scroll" && (
                 <div className="space-y-3">
                   <p className="text-ink/60 dark:text-white/60">
