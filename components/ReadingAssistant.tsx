@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ReaderPrefs } from "./PostReader";
+import Select from "./Select";
 
 type Tab = "scroll" | "read" | "vocab" | "summary" | "listen" | "prefs";
 
@@ -76,14 +77,63 @@ export default function ReadingAssistant({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  // Auto-scroll
+  // Auto-scroll: requestAnimationFrame + fractional position tracking.
+  // The old setInterval + scrollBy(0, speed) didn't move the page on iPhone.
+  // This version tracks the exact position itself (so tiny steps never round
+  // to zero), turns off CSS smooth-scrolling while running, stops at the end
+  // of the article, and pauses when the reader scrolls by hand.
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(2);
+  const speedRef = useRef(speed);
+  const assistantRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
   useEffect(() => {
     if (!scrolling) return;
-    const id = setInterval(() => window.scrollBy(0, speed), 30);
-    return () => clearInterval(id);
-  }, [scrolling, speed]);
+
+    const root = document.documentElement;
+    const prevBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+
+    let raf = 0;
+    let last = performance.now();
+    let pos = window.scrollY;
+
+    const tick = (now: number) => {
+      const dt = Math.min(now - last, 100);
+      last = now;
+      // If something else moved the page, continue from where it is now.
+      if (Math.abs(window.scrollY - pos) > 3) pos = window.scrollY;
+      // Same pace as before: `speed` px every 30ms.
+      pos += (speedRef.current * 1000 * dt) / 30 / 1000;
+      const max = Math.max(0, (document.scrollingElement ?? root).scrollHeight - window.innerHeight);
+      if (pos >= max) {
+        window.scrollTo(0, max);
+        setScrolling(false);
+        return;
+      }
+      window.scrollTo(0, pos);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    // Reader drags or wheels the page themselves -> pause (but not when
+    // they're using the assistant panel itself).
+    const pauseOnManualScroll = (e: Event) => {
+      if (assistantRef.current?.contains(e.target as Node)) return;
+      setScrolling(false);
+    };
+    window.addEventListener("touchmove", pauseOnManualScroll, { passive: true });
+    window.addEventListener("wheel", pauseOnManualScroll, { passive: true });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      root.style.scrollBehavior = prevBehavior;
+      window.removeEventListener("touchmove", pauseOnManualScroll);
+      window.removeEventListener("wheel", pauseOnManualScroll);
+    };
+  }, [scrolling]);
 
   // Listen mode — reads the full article aloud via the browser's speech
   // engine, one paragraph per utterance. Chrome has a known bug where a
@@ -151,7 +201,7 @@ export default function ReadingAssistant({
   }, [y]);
 
   return (
-    <motion.div style={{ top: sy }} className="fixed right-4 z-40 md:right-8">
+    <motion.div ref={assistantRef} style={{ top: sy }} className="fixed right-4 z-40 md:right-8">
       <AnimatePresence>
         {open && (
           <motion.div
@@ -357,20 +407,18 @@ export default function ReadingAssistant({
                       className="mt-1 w-full accent-signal"
                     />
                   </label>
-                  <label className="block text-xs text-ink/50 dark:text-white/50">
-                    Font family
-                    <select
+                  <div className="text-xs text-ink/50 dark:text-white/50">
+                    <span className="mb-1 block">Font family</span>
+                    <Select
                       value={prefs.font}
-                      onChange={(e) =>
-                        setPrefs({ ...prefs, font: e.target.value as ReaderPrefs["font"] })
-                      }
-                      className="mt-1 w-full rounded-lg border border-black/10 bg-white/70 p-1.5 text-ink dark:border-white/10 dark:bg-white/5 dark:text-white"
-                    >
-                      <option value="body">Sans (Inter)</option>
-                      <option value="display">Display (Jakarta)</option>
-                      <option value="serif">Serif</option>
-                    </select>
-                  </label>
+                      onChange={(v) => setPrefs({ ...prefs, font: v as ReaderPrefs["font"] })}
+                      options={[
+                        { value: "body", label: "Sans (Inter)" },
+                        { value: "display", label: "Display (Jakarta)" },
+                        { value: "serif", label: "Serif" },
+                      ]}
+                    />
+                  </div>
                   <button
                     onClick={() => setPrefs({ ...prefs, highlightMode: !prefs.highlightMode })}
                     className={`focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2 text-sm font-semibold transition ${
