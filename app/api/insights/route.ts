@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { askClaudeForJSON, AnthropicNotConfiguredError } from "@/lib/anthropic";
+import { askClaudeForJSON, AnthropicNotConfiguredError, GeminiBusyError } from "@/lib/anthropic";
+
+// Gives the retries in lib/anthropic.ts enough time on Vercel.
+export const maxDuration = 30;
 
 interface InsightsResult {
   angles: string[];
@@ -29,13 +32,19 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
-    console.error("[insights] failed:", err);
     if (err instanceof AnthropicNotConfiguredError) {
       return NextResponse.json(
         { error: "AI is not configured. Add GEMINI_API_KEY to the environment variables." },
         { status: 503 }
       );
     }
+    if (err instanceof GeminiBusyError) {
+      return NextResponse.json(
+        { error: "AI insights are busy right now. Please try again in a minute." },
+        { status: 503, headers: { "Retry-After": "30" } }
+      );
+    }
+    console.error("[insights] failed:", err);
     return NextResponse.json({ error: "Failed to generate insights" }, { status: 500 });
   }
 }
