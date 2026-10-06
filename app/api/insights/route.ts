@@ -29,9 +29,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
+    console.error("[insights] failed:", err);
     if (err instanceof AnthropicNotConfiguredError) {
       return NextResponse.json(
-        { error: "AI is not configured. Add ANTHROPIC_API_KEY to .env.local." },
+        { error: "AI is not configured. Add GEMINI_API_KEY to the environment variables." },
         { status: 503 }
       );
     }

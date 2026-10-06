@@ -26,7 +26,7 @@ export async function askClaudeForJSON<T>(system: string, userPrompt: string): P
         contents: [{ role: "user", parts: [{ text: userPrompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          maxOutputTokens: 1024,
+          maxOutputTokens: 4096,
         },
       }),
     }
