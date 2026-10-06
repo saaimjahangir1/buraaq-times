@@ -37,6 +37,7 @@ const CARDS = [
 
 const QUICK_LINKS = [
   { label: "Home", href: "/" },
+  { label: "Resume Builder", href: "/tools/resume-builder" },
   { label: "About Us", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy" },

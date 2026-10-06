@@ -10,6 +10,7 @@ const LINKS = [
   { label: "Home", href: "/" },
   { label: "News", href: "/#news" },
   { label: "Articles", href: "/#articles" },
+  { label: "Resume Builder", href: "/tools/resume-builder" },
   { label: "About Us", href: "/about" },
   { label: "Contact Us", href: "/contact" },
 ];
