@@ -6,6 +6,8 @@ interface MailInput {
   subject: string;
   html: string;
   replyTo?: string;
+  /** Extra headers, e.g. List-Unsubscribe for the newsletter. */
+  headers?: Record<string, string>;
 }
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
@@ -31,7 +33,7 @@ function getTransporter() {
  * surface the content directly (e.g. in a dev-only API response) when
  * nothing was actually delivered.
  */
-export async function sendMail({ to, subject, html, replyTo }: MailInput): Promise<{ sent: boolean }> {
+export async function sendMail({ to, subject, html, replyTo, headers }: MailInput): Promise<{ sent: boolean }> {
   const t = getTransporter();
   if (!t) {
     console.log(`\n[mailer] SMTP not configured — would have sent:\nTo: ${to}\nSubject: ${subject}\n${html}\n`);
@@ -43,6 +45,7 @@ export async function sendMail({ to, subject, html, replyTo }: MailInput): Promi
     subject,
     html,
     ...(replyTo ? { replyTo } : {}),
+    ...(headers ? { headers } : {}),
   });
   return { sent: true };
 }

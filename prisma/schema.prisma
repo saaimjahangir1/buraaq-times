@@ -250,3 +250,37 @@ model PostReview {
   @@index([status])
   @@index([postId, createdAt])
 }
+
+// Newsletter sign-ups. Double opt-in: an address only receives the daily
+// digest after clicking the link in the confirmation email.
+// status: "PENDING" | "ACTIVE" | "UNSUBSCRIBED"
+model Subscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  status         String    @default("PENDING")
+  // Random secret used in the confirm and unsubscribe links.
+  token          String    @unique
+  createdAt      DateTime  @default(now())
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  // The last digest this subscriber was sent — makes sending resumable and
+  // guarantees nobody gets the same digest twice.
+  lastIssueId    String?
+  lastSentAt     DateTime?
+
+  @@index([status])
+}
+
+// One row per daily digest (date in Pakistan time, e.g. "2026-10-08").
+// status: "SENDING" | "SENT" | "SKIPPED" (nothing new was published)
+model NewsletterIssue {
+  id          String    @id @default(cuid())
+  date        String    @unique
+  subject     String
+  postIds     String    @default("[]")
+  status      String    @default("SENDING")
+  sentCount   Int       @default(0)
+  failedCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+}
