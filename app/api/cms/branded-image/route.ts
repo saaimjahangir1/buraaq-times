@@ -12,7 +12,9 @@ const schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const guard = await requireApprovedUser(req);
+  // Proofreaders may regenerate these when they change a headline, since the
+  // headline is baked into the image.
+  const guard = await requireApprovedUser(req, { allowProofreader: true });
   if (isNextResponse(guard)) return guard;
 
   const parsed = schema.safeParse(await req.json());

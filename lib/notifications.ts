@@ -7,7 +7,8 @@ export type NotificationType =
   | "SEO_ALERT"
   | "ACCOUNT"
   | "DRAFT_REMINDER"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "REVIEW";
 
 export async function notify(
   userId: string,

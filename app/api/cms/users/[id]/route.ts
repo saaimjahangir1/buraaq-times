@@ -3,10 +3,11 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
 import { notify } from "@/lib/notifications";
+import { emailProofreaderApproved } from "@/lib/proofread";
 
 const schema = z.object({
   status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
-  role: z.enum(["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR"]).optional(),
+  role: z.enum(["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR", "PROOFREADER"]).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -23,7 +24,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const user = await prisma.user.update({ where: { id: params.id }, data: parsed.data });
 
   if (parsed.data.status && parsed.data.status !== before?.status) {
-    if (parsed.data.status === "APPROVED") {
+    if (parsed.data.status === "APPROVED" && user.role === "PROOFREADER") {
+      // Proofreaders never see the CMS notification bell, so tell them by email.
+      await emailProofreaderApproved(user);
+    } else if (parsed.data.status === "APPROVED") {
       await notify(user.id, "ACCOUNT", "Account approved", "You can now publish on Buraaq Times.");
     } else if (parsed.data.status === "REJECTED") {
       await notify(user.id, "ACCOUNT", "Account not approved", "An admin has declined your account.");

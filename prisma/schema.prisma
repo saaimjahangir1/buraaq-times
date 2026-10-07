@@ -20,7 +20,7 @@ datasource db {
 // Roles/statuses are plain strings rather than native enums so the same
 // schema works unmodified on SQLite (dev) and Postgres (production).
 // Valid values are enforced in application code — see lib/auth.ts.
-// role:   "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR"
+// role:   "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR" | "PROOFREADER"
 // status: "PENDING" | "APPROVED" | "REJECTED"
 model User {
   id           String   @id @default(cuid())
@@ -50,10 +50,15 @@ model User {
   media         Media[]
   revisions     PostRevision[]
   notifications Notification[]
+
+  reviewsSubmitted PostReview[] @relation("ReviewSubmitter")
+  reviewsClaimed   PostReview[] @relation("ReviewClaimer")
 }
 
 // type:   "news" | "article"
-// status: "DRAFT" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED"
+// status: "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "SCHEDULED" | "ARCHIVED"
+// IN_REVIEW = a never-published post waiting for a proofreader. It is not
+// public (lib/public-data.ts only shows PUBLISHED / due SCHEDULED).
 model Post {
   id          String    @id @default(cuid())
   type        String
@@ -107,6 +112,7 @@ model Post {
   comments  Comment[]
   revisions PostRevision[]
   reactions PostReaction[]
+  reviews   PostReview[]
 
   @@index([type, status])
 }
@@ -195,4 +201,52 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, read])
+}
+
+// Proofreading queue. Every "publish" by a non-admin editor creates one row
+// holding a full snapshot of what the editor wants to go live. The live Post
+// is only changed when a proofreader approves — so for a post that is already
+// live, readers keep seeing the current version until the edit is approved.
+//
+// status: "PENDING"   waiting for a proofreader
+//         "CLAIMED"   locked by one proofreader (claimedById); auto-released
+//                     after 24h without activity (see lib/proofread.ts)
+//         "APPROVED"  applied to the Post and published
+//         "REJECTED"  returned to the editor with rejectReason
+//         "CANCELLED" withdrawn by the editor, or bypassed by an admin
+//         "DISMISSED" editor discarded a rejected edit of a live post
+model PostReview {
+  id     String @id @default(cuid())
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  status String @default("PENDING")
+
+  // The text a proofreader works on (editable while claimed).
+  title    String
+  summary  String
+  bodyHtml String
+  // Every other editor field (category, tags, images, SEO, placement) as
+  // JSON — applied together with the text on approval.
+  payload  String
+
+  // What approval should do: "PUBLISHED" now, or "SCHEDULED" for scheduledAt.
+  targetStatus String    @default("PUBLISHED")
+  scheduledAt  DateTime?
+  // true when the post was already live at submission time.
+  isUpdate     Boolean   @default(false)
+
+  submittedById String
+  submittedBy   User      @relation("ReviewSubmitter", fields: [submittedById], references: [id])
+  claimedById   String?
+  claimedBy     User?     @relation("ReviewClaimer", fields: [claimedById], references: [id])
+  claimedAt     DateTime?
+  lastActivityAt DateTime?
+  decidedAt     DateTime?
+  rejectReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([postId, createdAt])
 }

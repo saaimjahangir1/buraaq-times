@@ -87,7 +87,17 @@ export async function GET(req: NextRequest) {
   const posts = await prisma.post.findMany({
     where,
     orderBy: { updatedAt: "desc" },
-    include: { author: { select: { name: true } }, category: true, tags: true },
+    include: {
+      author: { select: { name: true } },
+      category: true,
+      tags: true,
+      // Latest proofreading round, for the "awaiting / proofreading / returned" badge.
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { status: true, claimedBy: { select: { name: true } } },
+      },
+    },
     take: 100,
   });
 
@@ -106,6 +116,14 @@ export async function POST(req: NextRequest) {
 
   if (!canAccessType(guard.role, data.type)) {
     return NextResponse.json({ error: `Not allowed to create ${data.type}` }, { status: 403 });
+  }
+  // Only admins can publish without proofreading. Editors create a draft and
+  // then submit it through /api/cms/posts/[id]/review.
+  if (guard.role !== "ADMIN" && (data.status === "PUBLISHED" || data.status === "SCHEDULED")) {
+    return NextResponse.json(
+      { error: "Publishing goes through proofreading — use “Submit for proofreading” instead." },
+      { status: 403 }
+    );
   }
 
   const slug = await uniqueSlug(data.slugSuggestion || data.title);

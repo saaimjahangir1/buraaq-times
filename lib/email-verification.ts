@@ -4,17 +4,22 @@ import { generateToken, tokenExpiry } from "./tokens";
 import { sendMail } from "./mailer";
 import { SITE_URL } from "./seo";
 
-export async function sendVerificationEmail(user: { id: string; name: string; email: string }) {
+export async function sendVerificationEmail(user: { id: string; name: string; email: string; role?: string }) {
   const token = generateToken();
   await prisma.user.update({
     where: { id: user.id },
     data: { emailVerifyToken: token, emailVerifyExpires: tokenExpiry(24) },
   });
 
-  const link = `${SITE_URL}/cms/verify-email?token=${token}`;
+  // Proofreaders verify through their own desk so the "Go to sign in" button
+  // after verifying lands on /proofread/login instead of the editor CMS.
+  const isProofreader = user.role === "PROOFREADER";
+  const link = `${SITE_URL}/${isProofreader ? "proofread" : "cms"}/verify-email?token=${token}`;
   const { sent } = await sendMail({
     to: user.email,
-    subject: "Verify your Buraaq Times CMS account",
+    subject: isProofreader
+      ? "Verify your Buraaq Times proofreader account"
+      : "Verify your Buraaq Times CMS account",
     html: `<p>Hi ${user.name},</p><p>Confirm your email to finish setting up your CMS account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
   });
 

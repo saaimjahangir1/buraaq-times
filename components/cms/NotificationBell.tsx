@@ -22,6 +22,7 @@ const ICONS: Record<string, React.ReactNode> = {
   ACCOUNT: <UserCog size={15} className="text-signal" />,
   DRAFT_REMINDER: <Info size={15} className="text-white/50" />,
   SYSTEM: <Info size={15} className="text-white/50" />,
+  REVIEW: <AlertTriangle size={15} className="text-red-400" />,
 };
 
 export default function NotificationBell() {

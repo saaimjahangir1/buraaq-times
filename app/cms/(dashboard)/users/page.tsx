@@ -9,7 +9,7 @@ interface UserRow {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR";
+  role: "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR" | "PROOFREADER";
   status: "PENDING" | "APPROVED" | "REJECTED";
   bio: string | null;
   createdAt: string;
@@ -47,7 +47,7 @@ export default function CmsUsersPage() {
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-white">Users</h1>
-      <p className="mt-1 text-sm text-white/50">Approve editor accounts and manage roles.</p>
+      <p className="mt-1 text-sm text-white/50">Approve editor and proofreader accounts and manage roles.</p>
 
       <div className="mt-5 flex gap-1.5">
         {(["PENDING", "ALL"] as const).map((f) => (
@@ -89,6 +89,7 @@ export default function CmsUsersPage() {
     		  { value: "ADMIN", label: "Admin" },
     		  { value: "NEWS_EDITOR", label: "News Editor" },
     		  { value: "ARTICLE_EDITOR", label: "Article Editor" },
+    		  { value: "PROOFREADER", label: "Proofreader" },
   		]}
 	      />
 
@@ -103,7 +104,11 @@ export default function CmsUsersPage() {
               >
                 {u.status}
               </span>
-              <span className="text-xs text-white/30">{u._count.posts} posts</span>
+              {u.role === "PROOFREADER" ? (
+                <span className="text-xs text-white/30">proofreader</span>
+              ) : (
+                <span className="text-xs text-white/30">{u._count.posts} posts</span>
+              )}
 
               {u.status !== "APPROVED" && (
                 <button

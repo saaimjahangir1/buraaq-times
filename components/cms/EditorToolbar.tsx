@@ -56,7 +56,9 @@ export default function EditorToolbar({
   onRequestImage,
 }: {
   editor: Editor | null;
-  onRequestImage: () => void;
+  // Optional: the proofreading desk has no media library, so it hides the
+  // image button by leaving this out.
+  onRequestImage?: () => void;
 }) {
   if (!editor) return null;
 
@@ -135,9 +137,11 @@ export default function EditorToolbar({
       <Btn label="Link" active={editor.isActive("link")} onClick={setLink}>
         <LinkIcon size={15} />
       </Btn>
-      <Btn label="Insert image" onClick={onRequestImage}>
-        <ImageIcon size={15} />
-      </Btn>
+      {onRequestImage && (
+        <Btn label="Insert image" onClick={onRequestImage}>
+          <ImageIcon size={15} />
+        </Btn>
+      )}
       <Btn
         label="Insert table"
         onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}

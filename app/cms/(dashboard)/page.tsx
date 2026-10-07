@@ -2,7 +2,7 @@ import { getSession, canAccessType, Role } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, CheckCircle2, Clock, Archive, Users, MessageSquare, TrendingUp } from "lucide-react";
+import { FileText, CheckCircle2, Clock, Archive, Users, MessageSquare, TrendingUp, SpellCheck } from "lucide-react";
 
 function StatCard({
   icon,
@@ -38,7 +38,11 @@ export default async function CmsOverviewPage() {
   const typeFilter =
     role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
 
-  const [draft, published, scheduled, archived, recent, pendingUsers, pendingComments] =
+  // Non-admins only ever see their own posts elsewhere in the CMS, so the
+  // "in review" counter is scoped the same way.
+  const ownFilter = role === "ADMIN" ? {} : { authorId: session.sub };
+
+  const [draft, published, scheduled, archived, recent, pendingUsers, pendingComments, inReview] =
     await Promise.all([
       prisma.post.count({ where: { ...typeFilter, status: "DRAFT" } }),
       prisma.post.count({ where: { ...typeFilter, status: "PUBLISHED" } }),
@@ -54,6 +58,9 @@ export default async function CmsOverviewPage() {
       role === "ADMIN"
         ? prisma.comment.count({ where: { status: "PENDING" } })
         : prisma.comment.count({ where: { status: "PENDING", post: { authorId: session.sub } } }),
+      prisma.postReview.count({
+        where: { status: { in: ["PENDING", "CLAIMED"] }, post: { ...typeFilter, ...ownFilter } },
+      }),
     ]);
 
   return (
@@ -68,6 +75,7 @@ export default async function CmsOverviewPage() {
         <StatCard icon={<CheckCircle2 size={17} />} label="Published" value={published} />
         <StatCard icon={<Clock size={17} />} label="Scheduled" value={scheduled} />
         <StatCard icon={<Archive size={17} />} label="Archived" value={archived} />
+        <StatCard icon={<SpellCheck size={17} />} label="With proofreaders" value={inReview} />
         {role === "ADMIN" && (
           <StatCard
             icon={<Users size={17} />}
@@ -106,10 +114,12 @@ export default async function CmsOverviewPage() {
                     ? "bg-cyan/20 text-cyan"
                     : p.status === "ARCHIVED"
                     ? "bg-white/10 text-white/50"
+                    : p.status === "IN_REVIEW"
+                    ? "bg-amber-400/15 text-amber-300"
                     : "bg-white/10 text-white/60"
                 }`}
               >
-                {p.status}
+                {p.status.replace("_", " ")}
               </span>
             </Link>
           ))}

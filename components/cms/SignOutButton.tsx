@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 
-export default function SignOutButton() {
+export default function SignOutButton({ redirectTo = "/cms/login" }: { redirectTo?: string }) {
   const router = useRouter();
   return (
     <button
       onClick={async () => {
         await fetch("/api/cms/auth/logout", { method: "POST" });
-        router.push("/cms/login");
+        router.push(redirectTo);
         router.refresh();
       }}
       className="focus-ring rounded-full bg-white/10 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/20"

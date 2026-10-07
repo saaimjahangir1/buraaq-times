@@ -17,6 +17,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     select: { id: true, name: true, email: true, role: true, status: true, emailVerified: true },
   });
   if (!user) redirect("/cms/login");
+  // Proofreaders have their own desk and no access to the editor CMS.
+  if (user.role === "PROOFREADER") redirect("/proofread");
 
   if (!user.emailVerified) {
     return (

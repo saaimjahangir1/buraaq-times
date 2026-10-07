@@ -14,9 +14,27 @@ interface PostRow {
   views: number;
   author: { name: string };
   category: { name: string } | null;
+  reviews?: { status: string; claimedBy: { name: string } | null }[];
 }
 
-const STATUS_TABS = ["ALL", "DRAFT", "PUBLISHED", "SCHEDULED", "ARCHIVED"] as const;
+const STATUS_TABS = ["ALL", "DRAFT", "IN_REVIEW", "PUBLISHED", "SCHEDULED", "ARCHIVED"] as const;
+
+/** Small second badge showing where the latest proofreading round stands. */
+function ReviewBadge({ review }: { review?: { status: string; claimedBy: { name: string } | null } }) {
+  if (!review) return null;
+  const map: Record<string, { label: string; cls: string }> = {
+    PENDING: { label: "awaiting proofread", cls: "bg-amber-400/15 text-amber-300" },
+    CLAIMED: { label: `proofreading${review.claimedBy ? ` · ${review.claimedBy.name.split(" ")[0]}` : ""}`, cls: "bg-cyan/15 text-cyan" },
+    REJECTED: { label: "returned", cls: "bg-red-500/15 text-red-400" },
+  };
+  const m = map[review.status];
+  if (!m) return null;
+  return (
+    <span className={`ml-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${m.cls}`}>
+      {m.label}
+    </span>
+  );
+}
 
 export default function PostTable({ type }: { type: "news" | "article" }) {
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -69,7 +87,7 @@ export default function PostTable({ type }: { type: "news" | "article" }) {
             className="bg-transparent text-sm text-white outline-none placeholder:text-white/30"
           />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {STATUS_TABS.map((s) => (
             <button
               key={s}
@@ -78,7 +96,7 @@ export default function PostTable({ type }: { type: "news" | "article" }) {
                 status === s ? "bg-signal text-white" : "bg-white/5 text-white/50 hover:bg-white/10"
               }`}
             >
-              {s.toLowerCase()}
+              {s.toLowerCase().replace("_", " ")}
             </button>
           ))}
         </div>
@@ -126,11 +144,14 @@ export default function PostTable({ type }: { type: "news" | "article" }) {
                         ? "bg-cyan/20 text-cyan"
                         : p.status === "ARCHIVED"
                         ? "bg-white/10 text-white/50"
+                        : p.status === "IN_REVIEW"
+                        ? "bg-amber-400/15 text-amber-300"
                         : "bg-white/10 text-white/60"
                     }`}
                   >
-                    {p.status}
+                    {p.status.replace("_", " ")}
                   </span>
+                  <ReviewBadge review={p.reviews?.[0]} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-white/40">
                   <span className="flex items-center gap-1">
