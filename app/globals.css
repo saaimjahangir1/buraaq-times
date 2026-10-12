@@ -446,3 +446,9 @@ body::before {
     animation: none;
   }
 }
+
+/* AdSense: collapse a unit (and its "Advertisement" label) when Google has no
+   ad to show, instead of leaving an empty reserved box. */
+.ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
+  display: none;
+}

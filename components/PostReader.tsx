@@ -19,6 +19,8 @@ import ReadingAssistant from "./ReadingAssistant";
 import ParagraphWithVocab from "./ParagraphWithVocab";
 import ProgressBar from "./ProgressBar";
 import FurtherReading from "./FurtherReading";
+import AdSlot from "./ads/AdSlot";
+import { AD_SLOTS } from "@/lib/ads";
 import PostCard from "./PostCard";
 import Reveal from "./Reveal";
 import BrandMark from "@/components/BrandMark";
@@ -44,6 +46,11 @@ function sectionLabel(paragraph: string) {
   const label = words.slice(0, 4).join(" ");
   return words.length > 4 ? `${label}…` : label || "Section";
 }
+
+// In-article ad placement: after the 3rd paragraph, and only in pieces long
+// enough that it doesn't crowd the text (focus mode never shows ads).
+const IN_ARTICLE_AD_AFTER = 2;
+const MIN_PARAGRAPHS_FOR_IN_ARTICLE_AD = 6;
 
 export default function PostReader({
   post,
@@ -370,9 +377,16 @@ export default function PostReader({
             {post.body.map((p, i) => (
               <div id={`section-${i}`} key={i} className="scroll-mt-28">
                 <ParagraphWithVocab text={p} />
+                {/* One ad partway through longer pieces only — never right under the
+                    headline or next to the Like/Save buttons. */}
+                {i === IN_ARTICLE_AD_AFTER && post.body.length >= MIN_PARAGRAPHS_FOR_IN_ARTICLE_AD && !prefs.focus && (
+                  <AdSlot slot={AD_SLOTS.inArticle} format="fluid" layout="in-article" minHeight={200} />
+                )}
               </div>
             ))}
           </div>
+
+          {!prefs.focus && <AdSlot slot={AD_SLOTS.endArticle} />}
 
           {/* AI-suggested further reading (replaces static references) */}
           <FurtherReading title={post.title} body={post.body} />
