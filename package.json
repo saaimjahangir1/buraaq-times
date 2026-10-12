@@ -36,6 +36,7 @@
     "@upstash/ratelimit": "^2.0.3",
     "@upstash/redis": "^1.34.0",
     "@vercel/blob": "^2.8.0",
+    "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^11.3.19",
     "gsap": "^3.12.5",

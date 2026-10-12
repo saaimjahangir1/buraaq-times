@@ -11,6 +11,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import LiquidGlassFx from "@/components/LiquidGlassFx";
 import Script from "next/script";
 import { ADSENSE_CLIENT } from "@/lib/ads";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -82,6 +83,7 @@ export default async function RootLayout({
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           />
         )}
+        <SpeedInsights />
       </body>
     </html>
   );
