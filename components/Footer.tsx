@@ -174,7 +174,7 @@ export default function Footer() {
         </div>
       </div>
 
-      <button onClick={scrollToTop} aria-label="Back to top" className="focus-ring fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full border bg-white/80 text-ink backdrop-blur-md transition-all duration-300 hover:scale-110 dark:bg-black/40 dark:text-white" style={{ borderColor: ACCENT_GLOW }} onMouseEnter={onBtnEnter} onMouseLeave={onBtnLeave}>
+      <button onClick={scrollToTop} aria-label="Back to top" className="glass-pill focus-ring fixed bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center text-ink hover:scale-110 dark:text-white" style={{ position: "fixed", borderColor: ACCENT_GLOW }} onMouseEnter={onBtnEnter} onMouseLeave={onBtnLeave}>
         <ArrowUp size={16} />
       </button>
     </footer>

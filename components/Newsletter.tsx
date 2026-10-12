@@ -96,7 +96,7 @@ export default function Newsletter() {
                 <button
                   type="submit"
                   disabled={status === "sending"}
-                  className="focus-ring flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-signal to-cyanDeep px-6 py-3 text-sm font-semibold text-white shadow-glow transition hover:brightness-110 disabled:opacity-60"
+                  className="lg-droplet focus-ring flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-signal to-cyanDeep px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-60"
                 >
                   {status === "sending" && <Loader2 size={15} className="animate-spin" />}
                   Subscribe

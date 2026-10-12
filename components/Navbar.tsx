@@ -29,7 +29,7 @@ export default function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4">
       <div className="w-full max-w-6xl">
         <nav
-          className={`glass-strong flex w-full items-center justify-between gap-2 rounded-glass px-2.5 py-1.5 transition-shadow duration-300 sm:px-5 sm:py-3 ${
+          className={`glass-strong lg-refract flex w-full items-center justify-between gap-2 rounded-glass px-2.5 py-1.5 transition-shadow duration-300 sm:px-5 sm:py-3 ${
             scrolled ? "shadow-glow" : ""
           }`}
         >
@@ -80,7 +80,7 @@ export default function Navbar() {
         </nav>
 
         {mobileOpen && (
-          <div className="glass-strong mt-2 rounded-glass p-2 md:hidden">
+          <div className="glass-strong lg-refract mt-2 rounded-glass p-2 md:hidden">
             <ul className="flex flex-col gap-1">
               {LINKS.map((l) => (
                 <li key={l.href}>

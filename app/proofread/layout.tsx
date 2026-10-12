@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, IBM_Plex_Mono } from "next/font/google";
 import "../globals.css";
+import LiquidGlassFx from "@/components/LiquidGlassFx";
 
 // Its own root layout (like /cms): none of the public site's navbar, footer or
 // 3D scene — and nothing on the public site links here.
@@ -26,7 +27,10 @@ export const metadata: Metadata = {
 export default function ProofreadRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${display.variable} ${body.variable} ${mono.variable}`}>
-      <body className="bg-paper text-ink dark:bg-void dark:text-white">{children}</body>
+      <body className="bg-paper text-ink dark:bg-void dark:text-white">
+        <LiquidGlassFx />
+        {children}
+      </body>
     </html>
   );
 }

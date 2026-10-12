@@ -12,10 +12,10 @@ export default function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="focus-ring relative flex h-9 w-16 items-center rounded-full bg-black/[0.06] px-1 transition dark:bg-white/10"
+      className="focus-ring lg-track relative flex h-9 w-16 items-center rounded-full px-1 transition"
     >
       <motion.span
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-glass dark:bg-charcoal"
+        className="lg-droplet flex h-7 w-7 items-center justify-center rounded-full bg-white dark:bg-charcoal"
         animate={{ x: isDark ? 28 : 0 }}
         transition={{ type: "spring", stiffness: 400, damping: 30 }}
       >

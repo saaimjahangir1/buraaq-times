@@ -443,7 +443,7 @@ export default function ReadingAssistant({
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Reading assistant"
-        className="focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-signal to-cyanDeep text-white shadow-glow transition hover:scale-105"
+        className="lg-droplet focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-signal to-cyanDeep text-white transition hover:scale-105"
       >
         <Sparkles size={20} />
       </button>

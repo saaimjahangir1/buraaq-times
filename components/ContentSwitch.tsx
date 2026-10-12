@@ -19,7 +19,7 @@ export default function ContentSwitch({
       <div
         role="tablist"
         aria-label="Content type"
-        className="glass-strong relative flex rounded-full p-1.5"
+        className="glass-strong lg-refract relative flex rounded-full p-1.5"
       >
         {(["news", "article"] as ContentType[]).map((t) => {
           const active = value === t;
@@ -34,7 +34,7 @@ export default function ContentSwitch({
               {active && (
                 <motion.span
                   layoutId="switch-pill"
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-signal to-cyanDeep shadow-glow"
+                  className="lg-droplet absolute inset-0 rounded-full bg-gradient-to-r from-signal to-cyanDeep"
                   transition={{ type: "spring", stiffness: 350, damping: 30 }}
                 />
               )}

@@ -8,6 +8,7 @@ import FeatherProgressWidget from "@/components/FeatherProgressWidget";
 import { getPublishedPosts } from "@/lib/public-data";
 import AmbientSceneLoader from "@/components/AmbientSceneLoader";
 import SmoothScroll from "@/components/SmoothScroll";
+import LiquidGlassFx from "@/components/LiquidGlassFx";
 
 const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -57,6 +58,7 @@ export default async function RootLayout({
       <body>
         <ThemeProvider>
           <SmoothScroll />
+          <LiquidGlassFx />
           <AmbientSceneLoader />
           <FeatherProgressWidget trendingPosts={trending} />
           <Navbar />

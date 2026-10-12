@@ -107,7 +107,7 @@ export default function Hero({ post }: { post: Post }) {
         />
 
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
-          <div className="glass mx-auto max-w-2xl rounded-glass p-6 text-center md:p-8">
+          <div className="glass-media mx-auto max-w-2xl rounded-glass p-6 text-center md:p-8">
             <div
               ref={badgeRef}
               className="mb-3 flex items-center justify-center gap-3 font-mono text-xs uppercase tracking-widest text-white/80"
@@ -135,7 +135,7 @@ export default function Hero({ post }: { post: Post }) {
               </span>
               <Link
                 href={postHref(post)}
-                className="focus-ring group flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/90"
+                className="lg-droplet focus-ring group flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/90"
               >
                 Read More
                 <ArrowUpRight
