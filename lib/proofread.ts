@@ -83,7 +83,7 @@ function pkt(date: Date) {
   return `${date.toLocaleString("en-GB", PKT)} PKT`;
 }
 
-function emailShell(inner: string, footer: string) {
+function emailShell(inner: string, footer: string, label = "Proofreading desk") {
   return `<!doctype html>
 <html><body style="margin:0;padding:0;background:#0b0b0f;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0b0b0f;padding:24px 12px;">
@@ -91,7 +91,7 @@ function emailShell(inner: string, footer: string) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#15151c;border-radius:16px;overflow:hidden;font-family:Helvetica,Arial,sans-serif;color:#e7e7ea;">
 <tr><td style="padding:22px 28px;border-bottom:3px solid ${BRAND};">
   <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;">Buraaq Times</span>
-  <span style="margin-left:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${BRAND};">Proofreading desk</span>
+  <span style="margin-left:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:${BRAND};">${label}</span>
 </td></tr>
 <tr><td style="padding:28px;">${inner}</td></tr>
 <tr><td style="padding:18px 28px;border-top:1px solid #2a2a33;font-size:12px;line-height:1.5;color:#8b8b96;">${footer}</td></tr>
@@ -117,13 +117,25 @@ function truncate(s: string, n: number) {
 
 export async function emailProofreadersAboutSubmission(reviewId: string) {
   try {
+    const submission = await prisma.postReview.findUnique({ where: { id: reviewId }, select: { submittedById: true } });
+    if (!submission) return { sent: 0 };
     const [review, proofreaders, waiting] = await Promise.all([
       prisma.postReview.findUnique({
         where: { id: reviewId },
         include: { post: { select: { type: true } }, submittedBy: { select: { name: true } } },
       }),
       prisma.user.findMany({
-        where: { role: "PROOFREADER", status: "APPROVED", emailVerified: true },
+        // Everyone with approved proofreading access — proofreader-only
+        // accounts and writers who also proofread — except the person who
+        // submitted it (they can't proofread their own piece).
+        where: {
+          emailVerified: true,
+          id: { not: submission.submittedById },
+          OR: [
+            { proofreaderStatus: "APPROVED" },
+            { role: "PROOFREADER", status: "APPROVED", proofreaderStatus: null },
+          ],
+        },
         select: { name: true, email: true },
       }),
       prisma.postReview.findMany({
@@ -292,6 +304,36 @@ ${button(editUrl, "Open in the CMS")}`,
 /* 3. Account approved → the new proofreader                           */
 /* ------------------------------------------------------------------ */
 
+export async function emailWriterApproved(user: { name: string; email: string; role: string }) {
+  try {
+    const login = `${SITE_URL}/cms/login`;
+    const kind = user.role === "NEWS_EDITOR" ? "news" : user.role === "ARTICLE_EDITOR" ? "articles" : "news and articles";
+    await sendMail({
+      to: user.email,
+      subject: "You can now write for Buraaq Times",
+      html: emailShell(
+        `<p style="margin:0;font-size:16px;color:#ffffff;">Hi ${escapeHtml(user.name.split(" ")[0])},</p>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#c9c9d1;">An admin approved your writer access. You can now write ${kind} in the CMS and submit them for proofreading. Sign in with the same email and password you already use.</p>
+${button(login, "Open the CMS")}`,
+        "Buraaq Times editorial CMS",
+        "Editorial CMS"
+      ),
+    });
+  } catch (err) {
+    console.error("[proofread] emailWriterApproved failed:", err);
+  }
+}
+
+/** Tells every admin (in the CMS bell) that someone asked for access. */
+export async function notifyAdminsOfRequest(title: string, body: string) {
+  try {
+    const admins = await prisma.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
+    await Promise.all(admins.map((a) => notify(a.id, "ACCOUNT", title, body, "/cms/users")));
+  } catch (err) {
+    console.error("[proofread] notifyAdminsOfRequest failed:", err);
+  }
+}
+
 export async function emailProofreaderApproved(user: { name: string; email: string }) {
   try {
     const login = `${SITE_URL}/proofread/login`;
@@ -300,7 +342,7 @@ export async function emailProofreaderApproved(user: { name: string; email: stri
       subject: "You're in: Buraaq Times proofreading desk",
       html: emailShell(
         `<p style="margin:0;font-size:16px;color:#ffffff;">Hi ${escapeHtml(user.name.split(" ")[0])},</p>
-<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#c9c9d1;">An admin approved your proofreader account. From now on you'll get an email whenever a piece is waiting for approval.</p>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#c9c9d1;">An admin approved your proofreader access. From now on you'll get an email whenever a piece is waiting for approval. Sign in with the same email and password you already use.</p>
 ${button(login, "Sign in to the desk")}
 <p style="margin:8px 0 0;font-size:12px;color:#8b8b96;">Bookmark this link: <a href="${login}" style="color:${BRAND};">${login}</a></p>`,
         "Buraaq Times proofreading desk"

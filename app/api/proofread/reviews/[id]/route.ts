@@ -68,6 +68,9 @@ async function explainClaim(id: string, meId: string) {
     include: { claimedBy: { select: { id: true, name: true } } },
   });
   if (!r) return new Conflict("This piece no longer exists — the editor may have deleted it.", 404);
+  if (r.submittedById === meId && r.status === "PENDING") {
+    return new Conflict("You can't proofread your own piece — another proofreader will pick it up.", 403);
+  }
   if (r.status === "CLAIMED" && r.claimedById !== meId) {
     return new Conflict(`${r.claimedBy?.name ?? "Another proofreader"} is already proofreading this.`);
   }
@@ -134,9 +137,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   try {
     if (body.action === "claim") {
-      // Atomic: only one proofreader can move it from PENDING to CLAIMED.
+      // Atomic: only one proofreader can move it from PENDING to CLAIMED, and
+      // never the person who wrote it (writers can be proofreaders too).
       const claimed = await prisma.postReview.updateMany({
-        where: { id, status: "PENDING" },
+        where: { id, status: "PENDING", submittedById: { not: guard.id } },
         data: { status: "CLAIMED", claimedById: guard.id, claimedAt: now, lastActivityAt: now },
       });
       if (claimed.count === 0) {

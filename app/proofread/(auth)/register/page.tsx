@@ -10,6 +10,7 @@ export default function ProofreadRegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
+  const [alsoWrite, setAlsoWrite] = useState<"" | "NEWS_EDITOR" | "ARTICLE_EDITOR">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -23,7 +24,7 @@ export default function ProofreadRegisterPage() {
       const res = await fetch("/api/proofread/auth/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, password, bio }),
+        body: JSON.stringify({ name, email, password, bio, alsoWrite: alsoWrite || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -121,6 +122,36 @@ export default function ProofreadRegisterPage() {
             className="focus-ring w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
           />
         </div>
+        <div>
+          <label className="mb-2 block text-xs font-medium text-white/60">
+            Also write for Buraaq Times? <span className="text-white/30">(optional)</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              ["", "Just proofread"],
+              ["NEWS_EDITOR", "+ Write news"],
+              ["ARTICLE_EDITOR", "+ Write articles"],
+            ] as const).map(([value, label]) => (
+              <button
+                type="button"
+                key={value || "none"}
+                onClick={() => setAlsoWrite(value)}
+                aria-pressed={alsoWrite === value}
+                className={`focus-ring rounded-xl border px-2 py-2.5 text-xs font-medium transition ${
+                  alsoWrite === value ? "border-signal bg-signal/20 text-white" : "border-white/10 bg-white/5 text-white/60"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {alsoWrite && (
+            <p className="mt-2 text-xs text-white/40">
+              Same email and password for both: sign in to the CMS to write, and here to proofread.
+            </p>
+          )}
+        </div>
+
         {error && <p className="text-sm text-red-400">{error}</p>}
 
         <button

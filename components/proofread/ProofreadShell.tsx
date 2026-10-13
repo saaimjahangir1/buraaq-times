@@ -9,7 +9,7 @@ export default function ProofreadShell({
   user,
   children,
 }: {
-  user: { name: string; isAdmin: boolean };
+  user: { name: string; isAdmin: boolean; canWrite?: boolean };
   children: React.ReactNode;
 }) {
   const router = useRouter();
@@ -46,7 +46,7 @@ export default function ProofreadShell({
                 Queue
               </Link>
             )}
-            {user.isAdmin && (
+            {(user.isAdmin || user.canWrite) && (
               <Link
                 href="/cms"
                 className="focus-ring flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white"

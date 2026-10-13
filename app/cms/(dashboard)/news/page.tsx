@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
-import { getSession, canAccessType } from "@/lib/auth";
+import { canAccessType } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/current-user";
 import PostTable from "@/components/cms/PostTable";
 
 export default async function CmsNewsListPage() {
-  const session = await getSession();
-  if (!session || !canAccessType(session.role, "news")) redirect("/cms");
+  const user = await getCurrentUser();
+  if (!user || user.writer !== "APPROVED" || !canAccessType(user.role, "news")) redirect("/cms");
   return <PostTable type="news" />;
 }

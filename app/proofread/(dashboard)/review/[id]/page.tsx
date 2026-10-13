@@ -84,7 +84,8 @@ export default async function ProofreadReviewPage({ params }: { params: { id: st
         categoryName={category?.name ?? null}
         changed={changed}
         canEdit={review.status === "CLAIMED" && review.claimedById === me.id}
-        canClaim={review.status === "PENDING"}
+        canClaim={review.status === "PENDING" && review.submittedById !== me.id}
+        ownSubmission={review.submittedById === me.id}
         canRelease={review.status === "CLAIMED" && (review.claimedById === me.id || me.role === "ADMIN")}
       />
     </div>

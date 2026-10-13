@@ -14,6 +14,7 @@ export async function GET() {
       email: true,
       role: true,
       status: true,
+      proofreaderStatus: true,
       bio: true,
       avatarUrl: true,
       totpEnabled: true,

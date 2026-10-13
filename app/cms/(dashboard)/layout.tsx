@@ -1,24 +1,18 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession, Role, roleLabel } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { roleLabel } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/current-user";
 import CmsShell from "@/components/cms/CmsShell";
 import SignOutButton from "@/components/cms/SignOutButton";
 import ResendVerificationButton from "@/components/cms/ResendVerificationButton";
-import { ShieldAlert, Clock, MailWarning } from "lucide-react";
+import RequestAccess from "@/components/account/RequestAccess";
+import { ShieldAlert, Clock, MailWarning, PenLine } from "lucide-react";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session) redirect("/cms/login");
-
-  // Re-check from the DB — the JWT could be from before an admin
+  // Re-check from the DB — the session cookie could be from before an admin
   // approved/rejected the account, or before email was verified.
-  const user = await prisma.user.findUnique({
-    where: { id: session.sub },
-    select: { id: true, name: true, email: true, role: true, status: true, emailVerified: true },
-  });
+  const user = await getCurrentUser();
   if (!user) redirect("/cms/login");
-  // Proofreaders have their own desk and no access to the editor CMS.
-  if (user.role === "PROOFREADER") redirect("/proofread");
 
   if (!user.emailVerified) {
     return (
@@ -39,7 +33,34 @@ export default async function DashboardLayout({ children }: { children: React.Re
     );
   }
 
-  if (user.role !== "ADMIN" && user.status !== "APPROVED") {
+  // Proofreader-only account: offer writer access on the same account.
+  if (user.writer === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="glass-strong max-w-md rounded-glass p-8 text-center">
+          <PenLine size={32} className="mx-auto text-signal" />
+          <h1 className="mt-4 font-display text-xl font-bold text-white">Want to write too?</h1>
+          <p className="mt-2 text-sm text-white/60">
+            Your account is set up for proofreading. Ask for writer access and, once an admin approves it, you can
+            sign in here with the same email and password to write and submit stories.
+          </p>
+          <div className="mt-6">
+            <RequestAccess kinds={["NEWS_EDITOR", "ARTICLE_EDITOR"]} />
+          </div>
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-white/10 pt-5">
+            {user.proofreader === "APPROVED" && (
+              <Link href="/proofread" className="focus-ring text-sm font-semibold text-signal hover:underline">
+                Go to the proofreading desk
+              </Link>
+            )}
+            <SignOutButton />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (user.writer !== "APPROVED") {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="glass-strong max-w-md rounded-glass p-8 text-center">
@@ -54,9 +75,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <p className="mt-2 text-sm text-white/60">
             {user.status === "REJECTED"
               ? "An admin has declined this account. Contact your editorial admin if you believe this is a mistake."
-              : `Your ${roleLabel(user.role as Role)} account is waiting on admin approval before you can publish. Check back soon.`}
+              : `Your ${roleLabel(user.role)} access is waiting on admin approval before you can write. You'll get an email when it's approved.`}
           </p>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col items-center gap-3">
+            {user.proofreader === "APPROVED" && (
+              <Link href="/proofread" className="focus-ring text-sm font-semibold text-signal hover:underline">
+                Go to the proofreading desk
+              </Link>
+            )}
             <SignOutButton />
           </div>
         </div>
@@ -65,7 +91,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <CmsShell user={{ name: user.name, email: user.email, role: user.role as Role }}>
+    <CmsShell user={{ name: user.name, email: user.email, role: user.role, proofreader: user.proofreader }}>
       {children}
     </CmsShell>
   );

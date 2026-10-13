@@ -1,4 +1,4 @@
-import { getSession, Role } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { Eye, MessageSquare, FolderTree, TrendingUp } from "lucide-react";
 
@@ -21,8 +21,9 @@ function Bar({ label, value, max }: { label: string; value: number; max: number 
 }
 
 export default async function CmsAnalyticsPage() {
-  const session = await getSession();
-  const role = session!.role as Role;
+  const me = await getCurrentUser();
+  const session = { sub: me!.id };
+  const role = me!.role;
   const typeFilter = role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
   const scopeFilter = role === "ADMIN" ? typeFilter : { ...typeFilter, authorId: session!.sub };
 

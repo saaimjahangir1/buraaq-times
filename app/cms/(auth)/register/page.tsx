@@ -11,6 +11,7 @@ export default function CmsRegisterPage() {
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("");
   const [role, setRole] = useState<"NEWS_EDITOR" | "ARTICLE_EDITOR">("NEWS_EDITOR");
+  const [alsoProofread, setAlsoProofread] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -24,7 +25,7 @@ export default function CmsRegisterPage() {
       const res = await fetch("/api/cms/auth/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name, email, password, bio, role }),
+        body: JSON.stringify({ name, email, password, bio, role, alsoProofread }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
@@ -136,6 +137,22 @@ export default function CmsRegisterPage() {
             ))}
           </div>
         </div>
+
+        <label className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-white/70">
+          <input
+            type="checkbox"
+            checked={alsoProofread}
+            onChange={(e) => setAlsoProofread(e.target.checked)}
+            className="mt-0.5 accent-signal"
+          />
+          <span>
+            I&apos;d also like to proofread
+            <span className="mt-0.5 block text-xs text-white/40">
+              Check other writers&apos; stories before they go live. Same email and password — sign in at the
+              proofreading desk for that.
+            </span>
+          </span>
+        </label>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
 

@@ -8,6 +8,28 @@ export type Role = (typeof ROLES)[number];
 export const STATUSES = ["PENDING", "APPROVED", "REJECTED"] as const;
 export type UserStatus = (typeof STATUSES)[number];
 
+export type AccessState = "PENDING" | "APPROVED" | "REJECTED" | null;
+
+type AccessUser = { role: string; status: string; proofreaderStatus?: string | null };
+
+/** Writing access (News/Articles in the CMS). null = this account has no writing role. */
+export function writerState(u: AccessUser): AccessState {
+  if (u.role === "ADMIN") return "APPROVED";
+  if (u.role === "PROOFREADER") return null;
+  return u.status as AccessState;
+}
+
+/**
+ * Proofreading access (the /proofread desk). null = never requested.
+ * Proofreader-only accounts created before writers could also proofread have
+ * no proofreaderStatus yet — their account status is their proofreader status.
+ */
+export function proofreaderState(u: AccessUser): AccessState {
+  if (u.role === "ADMIN") return "APPROVED";
+  if (u.proofreaderStatus) return u.proofreaderStatus as AccessState;
+  return u.role === "PROOFREADER" ? (u.status as AccessState) : null;
+}
+
 export function roleLabel(role: Role) {
   return {
     ADMIN: "Admin",

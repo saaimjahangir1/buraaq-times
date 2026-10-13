@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/current-user";
+import RequestAccess from "@/components/account/RequestAccess";
 import ProofreadShell from "@/components/proofread/ProofreadShell";
 import SignOutButton from "@/components/cms/SignOutButton";
 import ResendVerificationButton from "@/components/cms/ResendVerificationButton";
@@ -22,31 +22,16 @@ function Gate({ icon, title, children }: { icon: React.ReactNode; title: string;
 }
 
 export default async function ProofreadDashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
-  if (!session) redirect("/proofread/login");
-
   // Re-read from the DB: the session cookie may predate an approval or role change.
-  const user = await prisma.user.findUnique({
-    where: { id: session.sub },
-    select: { id: true, name: true, email: true, role: true, status: true, emailVerified: true },
-  });
+  const user = await getCurrentUser();
   if (!user) redirect("/proofread/login");
 
-  if (user.role !== "PROOFREADER" && user.role !== "ADMIN") {
-    return (
-      <Gate icon={<SpellCheck size={32} className="mx-auto text-signal" />} title="This desk is for proofreaders">
-        <p className="mt-2 text-sm text-white/60">
-          You&apos;re signed in as an editor. Your work lives in the CMS.
-        </p>
-        <div className="mt-6 flex flex-col items-center gap-3">
-          <Link href="/cms" className="focus-ring rounded-full bg-signal px-6 py-2.5 text-sm font-semibold text-white">
-            Go to the CMS
-          </Link>
-          <SignOutButton redirectTo="/proofread/login" />
-        </div>
-      </Gate>
-    );
-  }
+  const writerLink =
+    user.writer === "APPROVED" ? (
+      <Link href="/cms" className="focus-ring text-sm font-semibold text-signal hover:underline">
+        Go to the CMS
+      </Link>
+    ) : null;
 
   if (!user.emailVerified) {
     return (
@@ -63,8 +48,27 @@ export default async function ProofreadDashboardLayout({ children }: { children:
     );
   }
 
-  if (user.role !== "ADMIN" && user.status !== "APPROVED") {
-    const rejected = user.status === "REJECTED";
+  // A writer who isn't a proofreader yet: offer it on the same account.
+  if (user.proofreader === null) {
+    return (
+      <Gate icon={<SpellCheck size={32} className="mx-auto text-signal" />} title="Want to proofread too?">
+        <p className="mt-2 text-sm text-white/60">
+          Your account is set up for writing. Proofreaders check other writers&apos; news and articles before they
+          go live. Ask for access and, once an admin approves it, sign in here with the same email and password.
+        </p>
+        <div className="mt-6">
+          <RequestAccess kinds={["PROOFREADER"]} />
+        </div>
+        <div className="mt-6 flex flex-col items-center gap-3 border-t border-white/10 pt-5">
+          {writerLink}
+          <SignOutButton redirectTo="/proofread/login" />
+        </div>
+      </Gate>
+    );
+  }
+
+  if (user.proofreader !== "APPROVED") {
+    const rejected = user.proofreader === "REJECTED";
     return (
       <Gate
         icon={
@@ -74,14 +78,15 @@ export default async function ProofreadDashboardLayout({ children }: { children:
             <Clock size={32} className="mx-auto text-signal" />
           )
         }
-        title={rejected ? "Account not approved" : "Waiting for admin approval"}
+        title={rejected ? "Proofreader access not approved" : "Waiting for admin approval"}
       >
         <p className="mt-2 text-sm text-white/60">
           {rejected
-            ? "An admin has declined this proofreader account. Contact the editorial team if you think this is a mistake."
-            : "An admin needs to approve your proofreader account. You'll get an email as soon as they do."}
+            ? "An admin has declined proofreader access for this account. Contact the editorial team if you think this is a mistake."
+            : "An admin needs to approve your proofreader access. You'll get an email as soon as they do."}
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col items-center gap-3">
+          {writerLink}
           <SignOutButton redirectTo="/proofread/login" />
         </div>
       </Gate>
@@ -89,6 +94,8 @@ export default async function ProofreadDashboardLayout({ children }: { children:
   }
 
   return (
-    <ProofreadShell user={{ name: user.name, isAdmin: user.role === "ADMIN" }}>{children}</ProofreadShell>
+    <ProofreadShell user={{ name: user.name, isAdmin: user.role === "ADMIN", canWrite: user.writer === "APPROVED" }}>
+      {children}
+    </ProofreadShell>
   );
 }

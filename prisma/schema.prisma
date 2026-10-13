@@ -21,6 +21,12 @@ datasource db {
 // schema works unmodified on SQLite (dev) and Postgres (production).
 // Valid values are enforced in application code — see lib/auth.ts.
 // role:   "ADMIN" | "NEWS_EDITOR" | "ARTICLE_EDITOR" | "PROOFREADER"
+//         (the WRITING role; "PROOFREADER" means "no writing role")
+// status: approval of the writing role
+// proofreaderStatus: approval of proofreading access, separate from writing,
+//         so one person can be both a writer and a proofreader. null = never
+//         asked. Older proofreader accounts have null here and use `status`
+//         (see proofreaderState in lib/auth-shared.ts).
 // status: "PENDING" | "APPROVED" | "REJECTED"
 model User {
   id           String   @id @default(cuid())
@@ -29,6 +35,7 @@ model User {
   passwordHash String
   role         String
   status       String   @default("PENDING")
+  proofreaderStatus String?
   bio          String?
   avatarUrl    String?
   createdAt    DateTime @default(now())

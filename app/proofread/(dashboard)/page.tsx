@@ -217,7 +217,20 @@ export default async function ProofreadQueuePage({
           </div>
         ) : (
           waiting.map((r) => (
-            <ItemCard key={r.id} item={r} now={now} right={<QueueAction reviewId={r.id} action="claim" />} />
+            <ItemCard
+              key={r.id}
+              item={r}
+              now={now}
+              right={
+                r.submittedById === me.id ? (
+                  <span className="rounded-full bg-white/5 px-3 py-2 text-xs font-semibold text-white/50">
+                    Your submission
+                  </span>
+                ) : (
+                  <QueueAction reviewId={r.id} action="claim" />
+                )
+              }
+            />
           ))
         )}
       </Section>

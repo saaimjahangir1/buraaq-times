@@ -1,4 +1,5 @@
-import { getSession, canAccessType, Role } from "@/lib/auth";
+import { canAccessType } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -31,9 +32,10 @@ function StatCard({
 }
 
 export default async function CmsOverviewPage() {
-  const session = await getSession();
-  if (!session) redirect("/cms/login");
-  const role = session.role as Role;
+  const me = await getCurrentUser();
+  if (!me) redirect("/cms/login");
+  const role = me.role;
+  const session = { sub: me.id, name: me.name };
 
   const typeFilter =
     role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
@@ -54,7 +56,17 @@ export default async function CmsOverviewPage() {
         take: 6,
         include: { author: { select: { name: true } } },
       }),
-      role === "ADMIN" ? prisma.user.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
+      role === "ADMIN"
+        ? prisma.user.count({
+            where: {
+              OR: [
+                { status: "PENDING", role: { not: "PROOFREADER" } },
+                { proofreaderStatus: "PENDING" },
+                { role: "PROOFREADER", status: "PENDING", proofreaderStatus: null },
+              ],
+            },
+          })
+        : Promise.resolve(0),
       role === "ADMIN"
         ? prisma.comment.count({ where: { status: "PENDING" } })
         : prisma.comment.count({ where: { status: "PENDING", post: { authorId: session.sub } } }),

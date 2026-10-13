@@ -17,9 +17,11 @@ import {
   ExternalLink,
   BarChart3,
   Mail,
+  SpellCheck,
 } from "lucide-react";
 import { useState } from "react";
-import { Role, roleLabel } from "@/lib/auth-shared";
+import { Role, roleLabel, AccessState } from "@/lib/auth-shared";
+import RequestAccess from "@/components/account/RequestAccess";
 import NotificationBell from "./NotificationBell";
 import BrandMark from "@/components/BrandMark";
 
@@ -47,7 +49,7 @@ export default function CmsShell({
   user,
   children,
 }: {
-  user: { name: string; email: string; role: Role };
+  user: { name: string; email: string; role: Role; proofreader?: AccessState };
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -95,6 +97,32 @@ export default function CmsShell({
       </nav>
 
       <div className="mt-6 space-y-3 border-t border-white/10 pt-4">
+        {user.proofreader === "APPROVED" && (
+          <Link
+            href="/proofread"
+            className="focus-ring flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 transition hover:bg-white/5 hover:text-white"
+          >
+            <SpellCheck size={16} /> Proofreading desk
+          </Link>
+        )}
+        {user.proofreader === "PENDING" && (
+          <p className="flex items-center gap-2.5 px-3 py-1 text-xs text-white/40">
+            <SpellCheck size={14} /> Proofreader access requested
+          </p>
+        )}
+        {user.proofreader === null && user.role !== "ADMIN" && (
+          <details className="rounded-xl px-3 py-1 text-sm text-white/50">
+            <summary className="flex cursor-pointer list-none items-center gap-2.5 py-1.5 hover:text-white">
+              <SpellCheck size={16} /> Proofread too?
+            </summary>
+            <div className="pb-2 pt-1 text-left">
+              <p className="mb-2 text-xs text-white/40">
+                Help check other writers&apos; stories before they go live. Same account, an admin approves it.
+              </p>
+              <RequestAccess kinds={["PROOFREADER"]} />
+            </div>
+          </details>
+        )}
         <Link
           href="/"
           target="_blank"

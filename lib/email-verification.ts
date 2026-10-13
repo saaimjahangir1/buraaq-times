@@ -4,7 +4,10 @@ import { generateToken, tokenExpiry } from "./tokens";
 import { sendMail } from "./mailer";
 import { SITE_URL } from "./seo";
 
-export async function sendVerificationEmail(user: { id: string; name: string; email: string; role?: string }) {
+export async function sendVerificationEmail(
+  user: { id: string; name: string; email: string; role?: string },
+  area?: "cms" | "proofread"
+) {
   const token = generateToken();
   await prisma.user.update({
     where: { id: user.id },
@@ -13,7 +16,9 @@ export async function sendVerificationEmail(user: { id: string; name: string; em
 
   // Proofreaders verify through their own desk so the "Go to sign in" button
   // after verifying lands on /proofread/login instead of the editor CMS.
-  const isProofreader = user.role === "PROOFREADER";
+  // Which sign-in page the link leads back to: where they registered, or for a
+  // resend, the area that matches their account.
+  const isProofreader = area ? area === "proofread" : user.role === "PROOFREADER";
   const link = `${SITE_URL}/${isProofreader ? "proofread" : "cms"}/verify-email?token=${token}`;
   const { sent } = await sendMail({
     to: user.email,

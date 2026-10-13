@@ -73,6 +73,7 @@ export default function ReviewWorkspace({
   canEdit: canEditInitially,
   canClaim,
   canRelease,
+  ownSubmission = false,
 }: {
   review: ReviewProps;
   post: { type: string; liveUrl: string | null };
@@ -82,6 +83,7 @@ export default function ReviewWorkspace({
   canEdit: boolean;
   canClaim: boolean;
   canRelease: boolean;
+  ownSubmission?: boolean;
 }) {
   const router = useRouter();
   // Becomes false if the server says the claim was lost (expired / released by an admin).
@@ -291,6 +293,11 @@ export default function ReviewWorkspace({
                 ? "Unsaved changes"
                 : `Claim: ${hoursLeft(claimExpiresAt(lastActivity))}`}
             </span>
+          </div>
+        ) : ownSubmission && review.status === "PENDING" ? (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
+            <Lock size={16} className="text-white/50" /> This is your own submission, so another proofreader will check
+            it. You can still read it here.
           </div>
         ) : canClaim ? (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm">
