@@ -30,5 +30,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Incorrect code." }, { status: 401 });
   }
 
-  return issueSession(user, pending.remember);
+  return issueSession(user, pending.remember, {}, pending.area);
 }

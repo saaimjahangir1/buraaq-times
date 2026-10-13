@@ -9,6 +9,8 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
   remember: z.boolean().optional(),
+  // Which sign-in this is: the editorial CMS (default) or the proofreading desk.
+  area: z.enum(["cms", "desk"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,6 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
   }
   const { email, password, remember } = parsed.data;
+  const area = parsed.data.area ?? "cms";
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
@@ -27,9 +30,9 @@ export async function POST(req: NextRequest) {
   }
 
   if (user.totpEnabled) {
-    const tempToken = await createPending2FAToken(user.id, Boolean(remember));
+    const tempToken = await createPending2FAToken(user.id, Boolean(remember), area);
     return NextResponse.json({ requires2FA: true, tempToken });
   }
 
-  return issueSession(user, Boolean(remember));
+  return issueSession(user, Boolean(remember), {}, area);
 }

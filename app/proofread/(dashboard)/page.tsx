@@ -107,7 +107,7 @@ export default async function ProofreadQueuePage({
 }: {
   searchParams: { done?: string };
 }) {
-  const session = await getSession();
+  const session = await getSession("desk");
   if (!session) redirect("/proofread/login");
   const me = await prisma.user.findUnique({ where: { id: session.sub }, select: { id: true, name: true, role: true } });
   if (!me) redirect("/proofread/login");

@@ -14,7 +14,7 @@ const LABELS: Record<Kind, string> = {
 };
 
 /** Buttons for asking an admin for the other kind of access on the same account. */
-export default function RequestAccess({ kinds }: { kinds: Kind[] }) {
+export default function RequestAccess({ kinds, area = "cms" }: { kinds: Kind[]; area?: "cms" | "desk" }) {
   const router = useRouter();
   const [busy, setBusy] = useState<Kind | null>(null);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -26,7 +26,7 @@ export default function RequestAccess({ kinds }: { kinds: Kind[] }) {
       const res = await cmsFetch("/api/account/request-access", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind }),
+        body: JSON.stringify({ kind, area }),
       });
       const data = await res.json().catch(() => ({}));
       setMessage({ ok: res.ok, text: data.message || data.error || (res.ok ? "Request sent." : "That didn't work.") });

@@ -1,12 +1,13 @@
 import "server-only";
-import { NextResponse } from "next/server";
-import { createSessionToken, SESSION_COOKIE, Role, UserStatus } from "./auth";
-import { generateCsrfToken, setCsrfCookie } from "./csrf";
+import { NextRequest, NextResponse } from "next/server";
+import { createSessionToken, sessionCookieName, Role, SessionArea, UserStatus } from "./auth";
+import { clearCsrfCookie, generateCsrfToken, setCsrfCookie } from "./csrf";
 
 export async function issueSession(
   user: { id: string; name: string; email: string; role: string; status: string },
   remember: boolean,
-  body: Record<string, unknown> = {}
+  body: Record<string, unknown> = {},
+  area: SessionArea = "cms"
 ) {
   const token = await createSessionToken(
     {
@@ -20,7 +21,8 @@ export async function issueSession(
   );
 
   const res = NextResponse.json({ ok: true, role: user.role, status: user.status, ...body });
-  res.cookies.set(SESSION_COOKIE, token, {
+  // Only this area's cookie: signing in to the desk doesn't sign you in to the CMS, and vice versa.
+  res.cookies.set(sessionCookieName(area), token, {
     httpOnly: true,
     // No HTTPS on this VPS yet — a Secure cookie would be silently
     // dropped by every browser, breaking login entirely (this exact bug).
@@ -35,5 +37,16 @@ export async function issueSession(
     maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
   });
   setCsrfCookie(res, generateCsrfToken());
+  return res;
+}
+
+/**
+ * Signs out of one area only. The CSRF cookie is shared by both areas, so it's
+ * kept while the person is still signed in to the other one.
+ */
+export function clearSession(req: NextRequest, res: NextResponse, area: SessionArea) {
+  res.cookies.set(sessionCookieName(area), "", { path: "/", maxAge: 0 });
+  const other: SessionArea = area === "desk" ? "cms" : "desk";
+  if (!req.cookies.get(sessionCookieName(other))?.value) clearCsrfCookie(res);
   return res;
 }

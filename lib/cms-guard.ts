@@ -19,22 +19,24 @@ export async function requireApprovedUser(
     return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
   }
 
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  const select = { id: true, name: true, email: true, role: true, status: true, proofreaderStatus: true } as const;
+  const session = await getSession("cms");
+  const user = session ? await prisma.user.findUnique({ where: { id: session.sub }, select }) : null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.sub },
-    select: { id: true, name: true, email: true, role: true, status: true, proofreaderStatus: true },
-  });
+  if (!user || writerState(user) !== "APPROVED") {
+    // Routes that proofreaders also use from the desk (e.g. regenerating
+    // branded images) accept the desk sign-in of an approved proofreader.
+    if (opts.allowProofreader) {
+      const desk = await getSession("desk");
+      const deskUser = desk ? await prisma.user.findUnique({ where: { id: desk.sub }, select }) : null;
+      if (deskUser && proofreaderState(deskUser) === "APPROVED") return { ...deskUser, role: deskUser.role as Role };
+      if (user && proofreaderState(user) === "APPROVED") return { ...user, role: user.role as Role };
+    }
+  }
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const writer = writerState(user);
   if (writer !== "APPROVED") {
-    // Routes that proofreaders also use (e.g. regenerating branded images)
-    // let approved proofreaders through even without a writing role.
-    if (opts.allowProofreader && proofreaderState(user) === "APPROVED") {
-      return { ...user, role: user.role as Role };
-    }
     return NextResponse.json(
       { error: writer === null ? "This account doesn't have writer access" : "Account pending approval" },
       { status: 403 }
@@ -45,7 +47,8 @@ export async function requireApprovedUser(
 
 /**
  * Guard for /api/proofread/* — approved, email-verified proofreaders, plus
- * admins (who can also release stuck claims). Same CSRF rules as above.
+ * admins (who can also release stuck claims), signed in to the proofreading
+ * desk (the CMS sign-in doesn't count here). Same CSRF rules as above.
  */
 export async function requireProofreader(
   req?: NextRequest
@@ -54,7 +57,7 @@ export async function requireProofreader(
     return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
   }
 
-  const session = await getSession();
+  const session = await getSession("desk");
   if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const user = await prisma.user.findUnique({

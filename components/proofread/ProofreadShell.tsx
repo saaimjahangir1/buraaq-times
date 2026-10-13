@@ -16,7 +16,8 @@ export default function ProofreadShell({
   const pathname = usePathname();
 
   const logout = async () => {
-    await fetch("/api/cms/auth/logout", { method: "POST" });
+    // Signs out of the desk only; a CMS sign-in in the same browser stays.
+    await fetch("/api/cms/auth/logout?area=desk", { method: "POST" });
     router.push("/proofread/login");
     router.refresh();
   };

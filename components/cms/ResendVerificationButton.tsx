@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Loader2, Send } from "lucide-react";
 
-export default function ResendVerificationButton() {
+export default function ResendVerificationButton({ area = "cms" }: { area?: "cms" | "desk" }) {
   const [state, setState] = useState<"idle" | "sending" | "sent">("idle");
   const [devLink, setDevLink] = useState<string | null>(null);
 
   const resend = async () => {
     setState("sending");
-    const res = await fetch("/api/cms/auth/resend-verification", { method: "POST" });
+    const res = await fetch(`/api/cms/auth/resend-verification?area=${area}`, { method: "POST" });
     const data = await res.json().catch(() => ({}));
     setDevLink(data.devLink || null);
     setState("sent");

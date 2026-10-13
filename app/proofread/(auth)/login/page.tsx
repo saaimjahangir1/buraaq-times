@@ -25,7 +25,7 @@ export default function ProofreadLoginPage() {
       const res = await fetch("/api/cms/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password, remember }),
+        body: JSON.stringify({ email, password, remember, area: "desk" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
@@ -118,6 +118,9 @@ export default function ProofreadLoginPage() {
 
       <h1 className="mt-6 font-display text-2xl font-bold text-white">Proofreader sign in</h1>
       <p className="mt-1 text-sm text-white/50">Review and approve news and articles before they go live.</p>
+      <p className="mt-2 text-xs text-white/35">
+        This signs you in to the proofreading desk only. If you also write, sign in to the CMS separately.
+      </p>
 
       <form onSubmit={submit} className="mt-6 space-y-4">
         <div>

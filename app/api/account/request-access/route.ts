@@ -9,19 +9,23 @@ import { notifyAdminsOfRequest } from "@/lib/proofread";
 // Lets someone who already has one kind of access ask for the other with the
 // same account: a writer asks to proofread, or a proofreader asks to write
 // News or Articles. An admin approves it on the Users page.
-const schema = z.object({ kind: z.enum(["PROOFREADER", "NEWS_EDITOR", "ARTICLE_EDITOR"]) });
+const schema = z.object({
+  kind: z.enum(["PROOFREADER", "NEWS_EDITOR", "ARTICLE_EDITOR"]),
+  // Which sign-in the request comes from (CMS by default, or the desk).
+  area: z.enum(["cms", "desk"]).optional(),
+});
 
 export async function POST(req: NextRequest) {
   if (!verifyCsrf(req)) return NextResponse.json({ error: "Invalid or missing CSRF token" }, { status: 403 });
   const { ok } = await rateLimit(`request-access:${clientIp(req)}`, 5, 60 * 60_000);
   if (!ok) return NextResponse.json({ error: "Too many requests — try again later." }, { status: 429 });
 
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-
   const parsed = schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   const { kind } = parsed.data;
+
+  const session = await getSession(parsed.data.area ?? "cms");
+  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const user = await prisma.user.findUnique({
     where: { id: session.sub },

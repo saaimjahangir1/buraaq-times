@@ -11,7 +11,7 @@ import ReviewWorkspace from "@/components/proofread/ReviewWorkspace";
 export const dynamic = "force-dynamic";
 
 export default async function ProofreadReviewPage({ params }: { params: { id: string } }) {
-  const session = await getSession();
+  const session = await getSession("desk");
   if (!session) redirect("/proofread/login");
   const me = await prisma.user.findUnique({ where: { id: session.sub }, select: { id: true, role: true } });
   if (!me) redirect("/proofread/login");

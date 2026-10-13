@@ -22,8 +22,9 @@ function Gate({ icon, title, children }: { icon: React.ReactNode; title: string;
 }
 
 export default async function ProofreadDashboardLayout({ children }: { children: React.ReactNode }) {
-  // Re-read from the DB: the session cookie may predate an approval or role change.
-  const user = await getCurrentUser();
+  // The desk has its own sign-in, separate from the CMS. Re-read from the DB:
+  // the session cookie may predate an approval or role change.
+  const user = await getCurrentUser("desk");
   if (!user) redirect("/proofread/login");
 
   const writerLink =
@@ -41,8 +42,8 @@ export default async function ProofreadDashboardLayout({ children }: { children:
           the desk.
         </p>
         <div className="mt-6 flex flex-col items-center gap-3">
-          <ResendVerificationButton />
-          <SignOutButton redirectTo="/proofread/login" />
+          <ResendVerificationButton area="desk" />
+          <SignOutButton area="desk" />
         </div>
       </Gate>
     );
@@ -57,11 +58,11 @@ export default async function ProofreadDashboardLayout({ children }: { children:
           go live. Ask for access and, once an admin approves it, sign in here with the same email and password.
         </p>
         <div className="mt-6">
-          <RequestAccess kinds={["PROOFREADER"]} />
+          <RequestAccess kinds={["PROOFREADER"]} area="desk" />
         </div>
         <div className="mt-6 flex flex-col items-center gap-3 border-t border-white/10 pt-5">
           {writerLink}
-          <SignOutButton redirectTo="/proofread/login" />
+          <SignOutButton area="desk" />
         </div>
       </Gate>
     );
@@ -87,7 +88,7 @@ export default async function ProofreadDashboardLayout({ children }: { children:
         </p>
         <div className="mt-6 flex flex-col items-center gap-3">
           {writerLink}
-          <SignOutButton redirectTo="/proofread/login" />
+          <SignOutButton area="desk" />
         </div>
       </Gate>
     );

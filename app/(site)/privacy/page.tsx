@@ -71,7 +71,8 @@ export default function PrivacyPage() {
           two years and contains no personal information.
         </li>
         <li>
-          <code>bt_session</code> and <code>bt_csrf</code> — set only for our editors and proofreaders when they sign in,
+          <code>bt_session</code>, <code>bt_desk_session</code> and <code>bt_csrf</code> — set only for our editors and
+          proofreaders when they sign in,
           to keep them signed in securely.
         </li>
         <li>

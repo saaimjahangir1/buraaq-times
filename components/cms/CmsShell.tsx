@@ -59,7 +59,8 @@ export default function CmsShell({
   const items = NAV.filter((i) => i.roles.includes(user.role));
 
   const logout = async () => {
-    await fetch("/api/cms/auth/logout", { method: "POST" });
+    // Signs out of the CMS only; a proofreading-desk sign-in stays.
+    await fetch("/api/cms/auth/logout?area=cms", { method: "POST" });
     router.push("/cms/login");
     router.refresh();
   };
