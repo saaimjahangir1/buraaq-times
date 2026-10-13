@@ -13,6 +13,8 @@ const schema = z.object({
   status: access.optional(),
   // Proofreader access, approved separately. null removes it.
   proofreaderStatus: access.nullable().optional(),
+  // Admin vouches for the address (e.g. the verification email never arrived).
+  emailVerified: z.literal(true).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -33,7 +35,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const role = body.role ?? before.role;
-  const data: { role?: string; status?: string; proofreaderStatus?: string | null } = {};
+  const data: {
+    role?: string;
+    status?: string;
+    proofreaderStatus?: string | null;
+    emailVerified?: boolean;
+    emailVerifyToken?: null;
+    emailVerifyExpires?: null;
+  } = {};
+  if (body.emailVerified) Object.assign(data, { emailVerified: true, emailVerifyToken: null, emailVerifyExpires: null });
   if (body.role) data.role = body.role;
   if (body.status) data.status = body.status;
 

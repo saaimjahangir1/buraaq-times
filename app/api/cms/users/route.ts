@@ -16,6 +16,7 @@ export async function GET() {
       role: true,
       status: true,
       proofreaderStatus: true,
+      emailVerified: true,
       bio: true,
       createdAt: true,
       _count: { select: { posts: true } },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, ShieldAlert, PenLine, SpellCheck } from "lucide-react";
+import { Check, X, ShieldAlert, PenLine, SpellCheck, Mail, MailWarning } from "lucide-react";
 import { cmsFetch } from "@/lib/cms-fetch";
 import Select from "@/components/Select";
 import { writerState, proofreaderState, AccessState } from "@/lib/auth-shared";
@@ -16,12 +16,13 @@ interface UserRow {
   role: Role;
   status: Status;
   proofreaderStatus: Status | null;
+  emailVerified: boolean;
   bio: string | null;
   createdAt: string;
   _count: { posts: number };
 }
 
-type Patch = Partial<{ role: Role; status: Status; proofreaderStatus: Status | null }>;
+type Patch = Partial<{ role: Role; status: Status; proofreaderStatus: Status | null; emailVerified: true }>;
 
 function StateChip({ state }: { state: AccessState }) {
   const map = {
@@ -124,6 +125,23 @@ export default function CmsUsersPage() {
                     <p className="truncate text-xs text-white/40">{u.email}</p>
                   </div>
                 </div>
+                {!u.emailVerified && (
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-semibold uppercase text-amber-300">
+                      <MailWarning size={12} /> Email not verified
+                    </span>
+                    <Btn
+                      tone="plain"
+                      onClick={() => {
+                        if (confirm(`Mark ${u.email} as verified? Only do this if you're sure the address belongs to ${u.name}.`)) {
+                          update(u.id, { emailVerified: true });
+                        }
+                      }}
+                    >
+                      <Check size={13} /> Mark verified
+                    </Btn>
+                  </div>
+                )}
                 {u._count.posts > 0 && <span className="text-xs text-white/30">{u._count.posts} posts</span>}
               </div>
 
@@ -197,6 +215,20 @@ export default function CmsUsersPage() {
                         </Btn>
                       )}
                     </>
+                  )}
+                  {p === "APPROVED" && (
+                    <p className="flex basis-full items-center gap-1.5 text-[11px] text-white/35">
+                      {u.emailVerified ? (
+                        <>
+                          <Mail size={12} className="text-signal" /> Gets “waiting for proofreading” emails
+                        </>
+                      ) : (
+                        <>
+                          <MailWarning size={12} className="text-amber-300" /> No proofreading emails until their email is
+                          verified
+                        </>
+                      )}
+                    </p>
                   )}
                 </div>
               </div>

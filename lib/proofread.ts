@@ -115,6 +115,25 @@ function truncate(s: string, n: number) {
 /* 1. New submission → every approved proofreader                      */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Who gets "waiting for proofreading" emails: everyone who can use the
+ * proofreading desk — admins, proofreader-only accounts (including ones an
+ * admin switched to "proofreader only"), and writers who also proofread —
+ * as long as their email address is verified. The person who submitted the
+ * piece is left out, since they can't proofread their own work.
+ */
+export function proofreadEmailRecipientsWhere(excludeUserId: string) {
+  return {
+    emailVerified: true,
+    id: { not: excludeUserId },
+    OR: [
+      { role: "ADMIN" },
+      { proofreaderStatus: "APPROVED" },
+      { role: "PROOFREADER", status: "APPROVED", proofreaderStatus: null },
+    ],
+  };
+}
+
 export async function emailProofreadersAboutSubmission(reviewId: string) {
   try {
     const submission = await prisma.postReview.findUnique({ where: { id: reviewId }, select: { submittedById: true } });
@@ -125,17 +144,7 @@ export async function emailProofreadersAboutSubmission(reviewId: string) {
         include: { post: { select: { type: true } }, submittedBy: { select: { name: true } } },
       }),
       prisma.user.findMany({
-        // Everyone with approved proofreading access — proofreader-only
-        // accounts and writers who also proofread — except the person who
-        // submitted it (they can't proofread their own piece).
-        where: {
-          emailVerified: true,
-          id: { not: submission.submittedById },
-          OR: [
-            { proofreaderStatus: "APPROVED" },
-            { role: "PROOFREADER", status: "APPROVED", proofreaderStatus: null },
-          ],
-        },
+        where: proofreadEmailRecipientsWhere(submission.submittedById),
         select: { name: true, email: true },
       }),
       prisma.postReview.findMany({
@@ -185,7 +194,7 @@ ${others
       : "";
 
     const subject = `Proofread needed: “${truncate(review.title, 70)}”${pendingCount > 1 ? ` (+${pendingCount - 1} more waiting)` : ""}`;
-    const footer = `You're getting this because you're a Buraaq Times proofreader. The first proofreader to claim an item locks it for everyone else; claims are released automatically after 24 hours without a save.`;
+    const footer = `You're getting this because you can proofread on Buraaq Times. The first proofreader to claim an item locks it for everyone else; claims are released automatically after 24 hours without a save.`;
 
     const htmlFor = (name: string) =>
       emailShell(
