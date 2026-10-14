@@ -11,6 +11,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import LiquidGlassFx from "@/components/LiquidGlassFx";
 import Script from "next/script";
 import { ADSENSE_CLIENT } from "@/lib/ads";
+import { Analytics } from "@vercel/analytics/next";
 
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
 
@@ -70,6 +71,7 @@ export default async function RootLayout({
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
           />
         )}
+        <Analytics />
       </body>
     </html>
   );
