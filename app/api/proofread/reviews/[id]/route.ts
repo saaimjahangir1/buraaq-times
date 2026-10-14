@@ -154,7 +154,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     if (body.action === "release") {
       const released = await prisma.postReview.updateMany({
         where: { id, status: "CLAIMED", ...(guard.role === "ADMIN" ? {} : { claimedById: guard.id }) },
-        data: { status: "PENDING", claimedById: null, claimedAt: null, lastActivityAt: null },
+        data: { status: "PENDING", claimedById: null, claimedAt: null, lastActivityAt: null, remindedAt: new Date() },
       });
       if (released.count === 0) throw await explainClaim(id, guard.id);
       return NextResponse.json({ ok: true });

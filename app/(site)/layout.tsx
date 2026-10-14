@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Inter, IBM_Plex_Mono } from "next/font/google";
+import { display, body, mono } from "@/lib/site-fonts";
 import "../globals.css";
 import { ThemeProvider } from "./providers";
 import Navbar from "@/components/Navbar";
@@ -11,18 +11,6 @@ import SmoothScroll from "@/components/SmoothScroll";
 import LiquidGlassFx from "@/components/LiquidGlassFx";
 import Script from "next/script";
 import { ADSENSE_CLIENT } from "@/lib/ads";
-
-const display = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["500", "600", "700", "800"],
-});
-const body = Inter({ subsets: ["latin"], variable: "--font-body" });
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500"],
-});
 
 import { SITE_URL, SITE_NAME } from "@/lib/seo";
 

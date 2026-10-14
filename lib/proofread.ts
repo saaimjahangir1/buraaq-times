@@ -21,7 +21,8 @@ export async function releaseStaleClaims() {
   try {
     await prisma.postReview.updateMany({
       where: { status: "CLAIMED", lastActivityAt: { lt: cutoff } },
-      data: { status: "PENDING", claimedById: null, claimedAt: null, lastActivityAt: null },
+      // Back in the queue: the reminder clock starts again from now.
+      data: { status: "PENDING", claimedById: null, claimedAt: null, lastActivityAt: null, remindedAt: new Date() },
     });
   } catch (err) {
     console.error("[proofread] releaseStaleClaims failed:", err);
@@ -122,10 +123,10 @@ function truncate(s: string, n: number) {
  * as long as their email address is verified. The person who submitted the
  * piece is left out, since they can't proofread their own work.
  */
-export function proofreadEmailRecipientsWhere(excludeUserId: string) {
+export function proofreadEmailRecipientsWhere(excludeUserId?: string) {
   return {
     emailVerified: true,
-    id: { not: excludeUserId },
+    ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
     OR: [
       { role: "ADMIN" },
       { proofreaderStatus: "APPROVED" },
@@ -360,4 +361,129 @@ ${button(login, "Sign in to the desk")}
   } catch (err) {
     console.error("[proofread] emailProofreaderApproved failed:", err);
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reminders: pieces nobody has claimed                                */
+/* ------------------------------------------------------------------ */
+
+/** Hours between "still waiting" reminders (PROOFREAD_REMINDER_HOURS, default 4). */
+export function reminderIntervalHours() {
+  const h = Number(process.env.PROOFREAD_REMINDER_HOURS);
+  return Number.isFinite(h) && h >= 1 ? h : 4;
+}
+
+function waitedFor(from: Date, now: Date) {
+  const h = Math.floor((now.getTime() - from.getTime()) / 3_600_000);
+  if (h < 1) return "under an hour";
+  if (h < 48) return `${h} hour${h === 1 ? "" : "s"}`;
+  return `${Math.floor(h / 24)} days`;
+}
+
+/**
+ * Called every 15 minutes by the server's scheduler (see
+ * /api/cron/proofread-reminders). When any unclaimed piece has waited
+ * `reminderIntervalHours()` since it was submitted (or since its last
+ * reminder), every proofreader and admin gets ONE email listing all unclaimed
+ * pieces — not one email per piece — and every listed piece's clock restarts.
+ * Safe to run from several places at once: each piece's reminder slot is
+ * taken with a conditional update, so nobody gets duplicates.
+ */
+export async function sendProofreadReminders(now: Date = new Date()) {
+  await releaseStaleClaims();
+  const cutoff = new Date(now.getTime() - reminderIntervalHours() * 3_600_000);
+  const dueWhere = {
+    status: "PENDING",
+    OR: [{ remindedAt: null, createdAt: { lte: cutoff } }, { remindedAt: { lte: cutoff } }],
+  };
+
+  const due = await prisma.postReview.findMany({ where: dueWhere, select: { id: true, remindedAt: true } });
+  if (due.length === 0) return { due: 0, listed: 0, sent: 0 };
+
+  // Take the reminder slot for each due piece. If another run got there
+  // first, its remindedAt has already moved on and this update matches nothing.
+  let claimed = 0;
+  for (const d of due) {
+    const r = await prisma.postReview.updateMany({
+      where: { id: d.id, status: "PENDING", remindedAt: d.remindedAt },
+      data: { remindedAt: now },
+    });
+    claimed += r.count;
+  }
+  if (claimed === 0) return { due: due.length, listed: 0, sent: 0 };
+
+  // List everything still waiting, and restart the clock on the rest too, so
+  // reminders arrive as one email every few hours instead of piece by piece.
+  const waiting = await prisma.postReview.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "asc" },
+    include: { post: { select: { type: true } }, submittedBy: { select: { name: true } } },
+  });
+  await prisma.postReview.updateMany({
+    where: { status: "PENDING", id: { in: waiting.map((w) => w.id) } },
+    data: { remindedAt: now },
+  });
+  const beingProofread = await prisma.postReview.count({ where: { status: "CLAIMED" } });
+
+  const recipients = await prisma.user.findMany({
+    where: proofreadEmailRecipientsWhere(),
+    select: { id: true, name: true, email: true },
+  });
+
+  const dashboard = `${SITE_URL}/proofread`;
+  const footer = `You're getting this because you can proofread on Buraaq Times. Reminders go out every ${reminderIntervalHours()} hours while something is waiting and nobody has claimed it.`;
+
+  const row = (w: (typeof waiting)[number]) => `<tr>
+  <td style="padding:10px 0;border-top:1px solid #2a2a33;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:${BRAND};">${typeLabel(w.post.type)}${
+      w.isUpdate ? " · edit to a live post" : ""
+    }</div>
+    <div style="margin-top:3px;font-size:15px;font-weight:700;color:#ffffff;line-height:1.35;">${escapeHtml(truncate(w.title, 110))}</div>
+    <div style="margin-top:3px;font-size:12px;color:#8b8b96;">by ${escapeHtml(w.submittedBy.name)}${
+      w.targetStatus === "SCHEDULED" && w.scheduledAt
+        ? ` · <span style="color:#f5c26b;">meant to go live ${pkt(w.scheduledAt)}</span>`
+        : ""
+    }</div>
+  </td>
+  <td align="right" valign="top" style="padding:10px 0 10px 12px;border-top:1px solid #2a2a33;font-size:12px;white-space:nowrap;color:#f5c26b;">waiting ${waitedFor(
+    w.createdAt,
+    now
+  )}</td>
+</tr>`;
+
+  let sent = 0;
+  for (const person of recipients) {
+    // Nobody is reminded about their own submissions — they can't claim them.
+    const mine = waiting.filter((w) => w.submittedById !== person.id);
+    if (mine.length === 0) continue;
+    const subject =
+      mine.length === 1
+        ? `Reminder: “${truncate(mine[0].title, 60)}” is still waiting for a proofreader`
+        : `Reminder: ${mine.length} pieces are still waiting for a proofreader`;
+    const html = emailShell(
+      `<p style="margin:0;font-size:16px;color:#ffffff;">Hi ${escapeHtml(person.name.split(" ")[0] || person.name)},</p>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.6;color:#c9c9d1;">
+${mine.length === 1 ? "This piece hasn't" : `These <strong style="color:#ffffff;">${mine.length} pieces</strong> haven't`} been claimed yet, so ${
+        mine.length === 1 ? "it can't" : "they can't"
+      } go live until someone proofreads ${mine.length === 1 ? "it" : "them"}.
+</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;">${mine.map(row).join("")}</table>
+${
+  beingProofread > 0
+    ? `<p style="margin:14px 0 0;font-size:12px;color:#8b8b96;">${beingProofread} other piece${beingProofread === 1 ? " is" : "s are"} already being proofread.</p>`
+    : ""
+}
+${button(dashboard, "Claim one on the proofreading desk")}
+<p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:#8b8b96;">If the button doesn't work, copy this link:<br>
+<a href="${dashboard}" style="color:${BRAND};word-break:break-all;">${dashboard}</a></p>`,
+      footer
+    );
+    try {
+      await sendMail({ to: person.email, subject, html });
+      sent += 1;
+    } catch (err) {
+      console.error(`[proofread] reminder to ${person.email} failed:`, err);
+    }
+  }
+  return { due: due.length, listed: waiting.length, sent };
 }

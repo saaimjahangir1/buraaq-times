@@ -250,6 +250,9 @@ model PostReview {
   lastActivityAt DateTime?
   decidedAt     DateTime?
   rejectReason  String?
+  // When the last "still waiting" reminder went out for this piece (or when it
+  // went back into the queue). Reminders repeat every few hours while unclaimed.
+  remindedAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
