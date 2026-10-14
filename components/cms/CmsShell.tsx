@@ -101,6 +101,9 @@ export default function CmsShell({
         {user.proofreader === "APPROVED" && (
           <Link
             href="/proofread"
+            // New tab: the desk has its own sign-in, and the CMS stays open here.
+            target="_blank"
+            rel="noopener noreferrer"
             className="focus-ring flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-white/50 transition hover:bg-white/5 hover:text-white"
           >
             <SpellCheck size={16} /> Proofreading desk

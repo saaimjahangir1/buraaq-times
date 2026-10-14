@@ -62,6 +62,9 @@ export default function Navbar() {
             {/* Sign-in moves into the mobile panel below; stays inline from sm: up */}
             <Link
               href="/cms/login"
+              // Opens in a new tab so the reader keeps their place on the site.
+              target="_blank"
+              rel="noopener noreferrer"
               aria-label="Sign in"
               className="focus-ring hidden items-center gap-2 rounded-full bg-signal/10 px-3 py-2 text-sm font-medium text-signal transition hover:bg-signal/20 sm:flex"
             >
@@ -97,6 +100,8 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/cms/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setMobileOpen(false)}
                   className="focus-ring flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-signal transition hover:bg-signal/10"
                 >

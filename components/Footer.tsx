@@ -68,7 +68,15 @@ function SocialButton(props: SocialButtonProps) {
   };
 
   return (
-    <a href={props.href} aria-label={props.label} className={className} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+    <a
+      href={props.href}
+      aria-label={props.label}
+      // Social profiles open in a new tab (placeholder "#" links stay put).
+      {...(props.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      className={className}
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+    >
       {Icon ? <Icon size={iconSize} strokeWidth={2} /> : <span className={size === "md" ? "text-sm font-bold" : "text-xs font-bold"}>X</span>}
     </a>
   );
@@ -85,7 +93,7 @@ function TrendingCard({ card }: { card: (typeof CARDS)[number] }) {
 
   return (
     <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.35, ease: "easeOut" }}>
-      <Link href={card.href} className="group relative block h-full overflow-hidden rounded-2xl border border-black/10 bg-black/[0.02] p-5 transition-shadow duration-300 dark:border-white/10 dark:bg-white/[0.02]" onMouseEnter={onEnter} onMouseLeave={onLeave}>
+      <Link href={card.href} target="_blank" rel="noopener noreferrer" className="group relative block h-full overflow-hidden rounded-2xl border border-black/10 bg-black/[0.02] p-5 transition-shadow duration-300 dark:border-white/10 dark:bg-white/[0.02]" onMouseEnter={onEnter} onMouseLeave={onLeave}>
         <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-black/[0.04] to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full dark:via-white/[0.06]" />
         <span className="relative flex h-10 w-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3" style={{ background: ACCENT_SOFT, color: ACCENT }}>
           <CardIcon size={18} strokeWidth={1.8} />
@@ -151,7 +159,7 @@ export default function Footer() {
             <ul className="mt-4 space-y-2.5">
               {QUICK_LINKS.map((l) => (
                 <li key={l.label}>
-                  <Link href={l.href} className="group focus-ring relative inline-flex items-center gap-1.5 text-sm text-ink/60 transition-all duration-300 hover:translate-x-1 hover:text-ink dark:text-white/55 dark:hover:text-white">
+                  <Link href={l.href} target="_blank" rel="noopener noreferrer" className="group focus-ring relative inline-flex items-center gap-1.5 text-sm text-ink/60 transition-all duration-300 hover:translate-x-1 hover:text-ink dark:text-white/55 dark:hover:text-white">
                     {l.label}
                     <ArrowRight size={12} className="translate-x-0 opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100" />
                     <span className="absolute -bottom-0.5 left-0 h-px w-0 transition-all duration-300 group-hover:w-full" style={{ background: "linear-gradient(90deg, " + ACCENT + ", " + ACCENT_2 + ")" }} />

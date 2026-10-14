@@ -49,7 +49,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <div className="mt-6 flex flex-col items-center gap-3 border-t border-white/10 pt-5">
             {user.proofreader === "APPROVED" && (
-              <Link href="/proofread" className="focus-ring text-sm font-semibold text-signal hover:underline">
+              <Link href="/proofread" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm font-semibold text-signal hover:underline">
                 Go to the proofreading desk
               </Link>
             )}
@@ -79,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </p>
           <div className="mt-6 flex flex-col items-center gap-3">
             {user.proofreader === "APPROVED" && (
-              <Link href="/proofread" className="focus-ring text-sm font-semibold text-signal hover:underline">
+              <Link href="/proofread" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm font-semibold text-signal hover:underline">
                 Go to the proofreading desk
               </Link>
             )}

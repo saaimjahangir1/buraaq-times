@@ -50,6 +50,9 @@ export default function ProofreadShell({
             {(user.isAdmin || user.canWrite) && (
               <Link
                 href="/cms"
+                // New tab: the CMS has its own sign-in, and the desk stays open here.
+                target="_blank"
+                rel="noopener noreferrer"
                 className="focus-ring flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white"
               >
                 <LayoutDashboard size={15} /> <span className="hidden sm:inline">CMS</span>

@@ -29,7 +29,7 @@ export default async function ProofreadDashboardLayout({ children }: { children:
 
   const writerLink =
     user.writer === "APPROVED" ? (
-      <Link href="/cms" className="focus-ring text-sm font-semibold text-signal hover:underline">
+      <Link href="/cms" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm font-semibold text-signal hover:underline">
         Go to the CMS
       </Link>
     ) : null;
