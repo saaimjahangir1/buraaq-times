@@ -156,6 +156,8 @@ export default function FeatherProgressWidget({ trendingPosts }: { trendingPosts
                 {featured && (
                   <Link
                     href={postHref(featured)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={() => setOpen(false)}
                     className="focus-ring group relative flex h-36 items-end overflow-hidden border-b border-white/10"
                   >
@@ -183,6 +185,8 @@ export default function FeatherProgressWidget({ trendingPosts }: { trendingPosts
                     <Link
                       key={p.slug}
                       href={postHref(p)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       onClick={() => setOpen(false)}
                       className="focus-ring group flex items-center gap-3 px-4 py-3 transition hover:bg-white/5"
                     >

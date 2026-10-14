@@ -408,6 +408,8 @@ export default function PostReader({
             {prev && (
               <Link
                 href={postHref(prev)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="glass focus-ring group flex items-center gap-2 rounded-glass p-4"
               >
                 <ChevronLeft size={18} className="text-signal" />
@@ -424,6 +426,8 @@ export default function PostReader({
             {next && (
               <Link
                 href={postHref(next)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="glass focus-ring group flex items-center justify-end gap-2 rounded-glass p-4 text-right"
               >
                 <div>

@@ -135,6 +135,8 @@ export default function Hero({ post }: { post: Post }) {
               </span>
               <Link
                 href={postHref(post)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="lg-droplet focus-ring group flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/90"
               >
                 Read More

@@ -31,6 +31,8 @@ export default function CategorySection({
         <Reveal className="lg:col-span-1">
           <Link
             href={postHref(featured)}
+            target="_blank"
+            rel="noopener noreferrer"
             className="glass focus-ring group flex h-full flex-col overflow-hidden rounded-glass"
           >
             <div className="relative h-44 overflow-hidden">

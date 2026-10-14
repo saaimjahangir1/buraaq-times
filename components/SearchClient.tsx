@@ -121,6 +121,8 @@ export default function SearchClient({ posts: allPosts }: { posts: Post[] }) {
                 <a
                   key={s.slug}
                   href={`/${s.type === "news" ? "news" : "articles"}/${s.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="focus-ring flex items-center gap-3 rounded-xl p-2.5 text-sm transition hover:bg-signal/10"
                 >
                   <span className="rounded-full bg-signal/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-signal">

@@ -36,7 +36,7 @@ export default function PostCard({ post, size = "md" }: { post: Post; size?: "md
       whileHover={{ y: -6 }}
       className="glass group flex h-full flex-col overflow-hidden rounded-glass transition-shadow hover:shadow-glow"
     >
-      <Link href={postHref(post)} className="focus-ring flex h-full flex-col">
+      <Link href={postHref(post)} target="_blank" rel="noopener noreferrer" className="focus-ring flex h-full flex-col">
         <div className={`relative overflow-hidden ${size === "sm" ? "h-36" : "h-48"}`}>
           <Image
             src={post.heroImage}
