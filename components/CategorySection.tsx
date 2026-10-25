@@ -35,9 +35,10 @@ export default function CategorySection({
             rel="noopener noreferrer"
             className="glass focus-ring group flex h-full flex-col overflow-hidden rounded-glass"
           >
-            <div className="relative h-44 overflow-hidden">
+            {/* 16:9 like the branded image, so its logo and headline aren't cropped off. */}
+            <div className="relative aspect-video overflow-hidden">
               <Image
-                src={featured.image}
+                src={featured.heroImage}
                 alt=""
                 fill
                 className="object-cover transition duration-500 group-hover:scale-105"

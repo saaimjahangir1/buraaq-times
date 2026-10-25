@@ -37,7 +37,8 @@ export default function PostCard({ post, size = "md" }: { post: Post; size?: "md
       className="glass group flex h-full flex-col overflow-hidden rounded-glass transition-shadow hover:shadow-glow"
     >
       <Link href={postHref(post)} target="_blank" rel="noopener noreferrer" className="focus-ring flex h-full flex-col">
-        <div className={`relative overflow-hidden ${size === "sm" ? "h-36" : "h-48"}`}>
+        {/* 16:9 like the branded image, so its logo and headline aren't cropped off. */}
+        <div className="relative aspect-video overflow-hidden">
           <Image
             src={post.heroImage}
             alt=""
