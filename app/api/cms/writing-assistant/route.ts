@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { askClaudeForJSON, AnthropicNotConfiguredError } from "@/lib/anthropic";
+import { askClaudeForJSON } from "@/lib/anthropic";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
+import { aiErrorResponse, toText, toTextList } from "@/lib/ai-errors";
+
+// Gemini can take 10–25 seconds (with retries) on a long draft.
+export const maxDuration = 30;
 
 interface WritingResult {
   grammarNotes: string[];
@@ -32,19 +36,21 @@ export async function POST(req: NextRequest) {
     }
     const plainText = String(bodyHtml).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-    const result = await askClaudeForJSON<WritingResult>(
+    const raw = await askClaudeForJSON<Partial<Record<keyof WritingResult, unknown>>>(
       SYSTEM,
       `Title: ${title}\n\nBody:\n${plainText.slice(0, 6000)}`
     );
 
+    // Always the shape the panel expects, whatever the AI sent back.
+    const result: WritingResult = {
+      grammarNotes: toTextList(raw?.grammarNotes, 4),
+      toneSuggestion: toText(raw?.toneSuggestion),
+      headlineSuggestions: toTextList(raw?.headlineSuggestions, 3),
+      imagePromptSuggestion: toText(raw?.imagePromptSuggestion),
+      factCheckReminders: toTextList(raw?.factCheckReminders, 3),
+    };
     return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof AnthropicNotConfiguredError) {
-      return NextResponse.json(
-        { error: "AI is not configured. Add ANTHROPIC_API_KEY to .env.local." },
-        { status: 503 }
-      );
-    }
-    return NextResponse.json({ error: "Writing assistance failed" }, { status: 500 });
+    return aiErrorResponse(err, "writing-assistant");
   }
 }

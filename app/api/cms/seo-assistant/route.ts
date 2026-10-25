@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { askClaudeForJSON, AnthropicNotConfiguredError } from "@/lib/anthropic";
+import { askClaudeForJSON } from "@/lib/anthropic";
+import { aiErrorResponse } from "@/lib/ai-errors";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
+
+// Gemini can take 10–25 seconds (with retries) on a long draft.
+export const maxDuration = 30;
 
 interface SeoResult {
   seoTitle: string;
@@ -66,12 +70,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof AnthropicNotConfiguredError) {
-      return NextResponse.json(
-        { error: "AI is not configured. Add ANTHROPIC_API_KEY to .env.local." },
-        { status: 503 }
-      );
-    }
-    return NextResponse.json({ error: "SEO analysis failed" }, { status: 500 });
+    return aiErrorResponse(err, "seo-assistant");
   }
 }

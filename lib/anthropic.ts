@@ -19,6 +19,14 @@ export class AnthropicNotConfiguredError extends Error {
   }
 }
 
+/** Gemini answered, but not with usable JSON (cut off or malformed), even after retrying. */
+export class GeminiBadResponseError extends Error {
+  constructor() {
+    super("Gemini returned an unreadable answer");
+    this.name = "GeminiBadResponseError";
+  }
+}
+
 /** Gemini stayed overloaded/unavailable after all retries. Routes should answer 503, not 500. */
 export class GeminiBusyError extends Error {
   constructor(public status: number) {
@@ -50,7 +58,7 @@ function callModel(model: string, apiKey: string, system: string, userPrompt: st
         responseMimeType: "application/json",
         // Thinking models spend part of this budget "thinking" before answering,
         // so leave plenty of room or long inputs get cut off mid-JSON.
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
       },
     }),
     signal: AbortSignal.timeout(timeoutMs),
@@ -93,6 +101,7 @@ export async function askClaudeForJSON<T>(system: string, userPrompt: string): P
   const models = FALLBACK_MODEL && FALLBACK_MODEL !== MODEL ? [MODEL, FALLBACK_MODEL] : [MODEL];
   const deadline = Date.now() + TOTAL_BUDGET_MS;
   let lastStatus = 0;
+  let unreadable = false;
 
   for (const model of models) {
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
@@ -115,8 +124,16 @@ export async function askClaudeForJSON<T>(system: string, userPrompt: string): P
       }
 
       if (res.ok) {
-        if (attempt > 0 || model !== MODEL) console.log(`[gemini] succeeded with ${model} on attempt ${attempt + 1}`);
-        return parseJSON<T>((await res.json()) as GeminiResponse, model);
+        try {
+          const parsed = parseJSON<T>((await res.json()) as GeminiResponse, model);
+          if (attempt > 0 || model !== MODEL) console.log(`[gemini] succeeded with ${model} on attempt ${attempt + 1}`);
+          return parsed;
+        } catch {
+          // Cut off mid-answer or not JSON (details logged by parseJSON):
+          // asking again usually works.
+          unreadable = true;
+          continue;
+        }
       }
 
       const text = await res.text().catch(() => "");
@@ -129,5 +146,6 @@ export async function askClaudeForJSON<T>(system: string, userPrompt: string): P
     }
   }
 
+  if (unreadable && lastStatus === 0) throw new GeminiBadResponseError();
   throw new GeminiBusyError(lastStatus);
 }
