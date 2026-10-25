@@ -16,6 +16,7 @@ import {
   X,
   ExternalLink,
   BarChart3,
+  Activity,
   Mail,
   SpellCheck,
 } from "lucide-react";
@@ -37,6 +38,7 @@ const NAV: NavItem[] = [
   { href: "/cms/news", label: "News", icon: <Newspaper size={17} />, roles: ["ADMIN", "NEWS_EDITOR"] },
   { href: "/cms/articles", label: "Articles", icon: <BookOpen size={17} />, roles: ["ADMIN", "ARTICLE_EDITOR"] },
   { href: "/cms/analytics", label: "Analytics", icon: <BarChart3 size={17} />, roles: ["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR"] },
+  { href: "/cms/google-analytics", label: "Google Analytics", icon: <Activity size={17} />, roles: ["ADMIN"] },
   { href: "/cms/categories", label: "Categories", icon: <FolderTree size={17} />, roles: ["ADMIN"] },
   { href: "/cms/media", label: "Media", icon: <ImageIcon size={17} />, roles: ["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR"] },
   { href: "/cms/comments", label: "Comments", icon: <MessageSquare size={17} />, roles: ["ADMIN"] },

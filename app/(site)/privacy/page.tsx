@@ -4,11 +4,11 @@ import LegalPage from "@/components/legal/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "What information Buraaq Times collects, how it is used, and the choices you have — including advertising cookies.",
+  description: "What information Buraaq Times collects, how it is used, and the choices you have — including analytics and advertising cookies.",
   alternates: { canonical: "/privacy" },
 };
 
-const UPDATED = "7 October 2026";
+const UPDATED = "25 October 2026";
 const CONTACT_EMAIL = "theburaaqtimes@gmail.com";
 
 export default function PrivacyPage() {
@@ -81,6 +81,15 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
+        We also use Google Analytics, which sets its own cookies (named <code>_ga</code>) to count visits and see
+        which pages are read, how readers find us and roughly where they are (country and city level). It doesn&apos;t
+        tell us who you are. You can opt out with Google&apos;s{" "}
+        <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">
+          Analytics opt-out browser add-on
+        </a>
+        .
+      </p>
+      <p>
         Advertising partners, including Google, also set cookies — see section 4. You can block or delete cookies in
         your browser settings; the site still works, but Like/Save may not remember your choices.
       </p>
@@ -150,6 +159,7 @@ export default function PrivacyPage() {
           article you are reading) and the AI Resume Builder;
         </li>
         <li>our email provider — delivers contact-form messages, account emails and the daily briefing;</li>
+        <li>Google Analytics — visitor statistics, as described in section 2;</li>
         <li>Google AdSense — advertising, as described above.</li>
       </ul>
       <p>We may also disclose information if required by law or to protect our rights and the safety of our users.</p>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getPublicPost, getPublishedPosts, getApprovedComments, getVisitorReactions } from "@/lib/public-data";
 import { getVisitorId } from "@/lib/visitor";
-import { buildPostMetadata, postJsonLd } from "@/lib/seo";
+import { buildPostMetadata, postJsonLd, jsonLdString } from "@/lib/seo";
 import PostReader from "@/components/PostReader";
 
 export const revalidate = 60;
@@ -31,7 +31,7 @@ export default async function NewsPage({ params }: { params: { slug: string } })
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(postJsonLd(post)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(postJsonLd(post)) }}
       />
       <PostReader
         post={post}

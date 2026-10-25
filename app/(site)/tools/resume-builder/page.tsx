@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { pageAlternates } from "@/lib/seo";
 import ResumeBuilder from "@/components/resume/ResumeBuilder";
 
 export const metadata: Metadata = {
+  alternates: pageAlternates("/tools/resume-builder"),
   title: "AI Resume Builder",
   description:
     "Turn rough notes about your work, studies and skills into a clean, professional resume, then download it as a PDF. Free, from Buraaq Times.",

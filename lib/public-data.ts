@@ -11,6 +11,8 @@ interface PostRow {
   summary: string;
   bodyHtml: string;
   publishedAt: Date | null;
+  status: string;
+  scheduledAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   readTimeMinutes: number;
@@ -47,8 +49,14 @@ const include = {
   author: { select: { name: true, role: true } },
 } as const;
 
+/** When a post went live: its publish time, or for a scheduled post the time it was scheduled for. */
+export function liveSince(p: { publishedAt: Date | null; status: string; scheduledAt: Date | null; createdAt: Date }): Date {
+  return p.publishedAt ?? (p.status === "SCHEDULED" && p.scheduledAt ? p.scheduledAt : p.createdAt);
+}
+
 function toPublicPost(p: PostRow): Post {
   const roleName = roleLabel(p.author.role as Role);
+  const live = liveSince(p);
   return {
     slug: p.slug,
     type: p.type as ContentType,
@@ -57,11 +65,10 @@ function toPublicPost(p: PostRow): Post {
     summary: p.summary,
     author: p.author.name,
     authorRole: roleName === "Admin" ? "Editor" : roleName,
-    date: formatDate(p.publishedAt ?? p.createdAt),
-    updated:
-      p.updatedAt.getTime() - (p.publishedAt ?? p.createdAt).getTime() > 60_000
-        ? formatDate(p.updatedAt)
-        : undefined,
+    date: formatDate(live),
+    updated: p.updatedAt.getTime() - live.getTime() > 60_000 ? formatDate(p.updatedAt) : undefined,
+    publishedAt: live.toISOString(),
+    updatedAt: (p.updatedAt > live ? p.updatedAt : live).toISOString(),
     readTime: `${p.readTimeMinutes} min`,
     image: p.featuredImageUrl || PLACEHOLDER_IMAGE,
     heroImage: p.brandedFeaturedImageUrl || p.featuredImageUrl || PLACEHOLDER_IMAGE,
@@ -138,4 +145,49 @@ export async function getVisitorReactions(type: ContentType, slug: string, visit
 export async function getPostIdBySlug(type: ContentType, slug: string) {
   const post = await prisma.post.findFirst({ where: { type, slug }, select: { id: true } });
   return post?.id ?? null;
+}
+
+/**
+ * Every public post, lightly (no body text), for the sitemap and search-engine
+ * feeds. Unlike getPublishedPosts there's no 200-post cap, so older posts stay
+ * discoverable as the archive grows.
+ */
+export async function getPostsForIndexing(opts: { since?: Date; limit?: number } = {}) {
+  const rows = await prisma.post.findMany({
+    where: publicWhere(),
+    orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+    take: opts.limit ?? 45_000,
+    select: {
+      slug: true,
+      type: true,
+      title: true,
+      summary: true,
+      status: true,
+      publishedAt: true,
+      scheduledAt: true,
+      createdAt: true,
+      updatedAt: true,
+      featuredImageUrl: true,
+      brandedFeaturedImageUrl: true,
+      category: { select: { name: true } },
+      tags: { select: { name: true } },
+      author: { select: { name: true } },
+    },
+  });
+  const posts = rows.map((r) => {
+    const live = liveSince(r);
+    return {
+      slug: r.slug,
+      type: r.type as ContentType,
+      title: r.title,
+      summary: r.summary,
+      publishedAt: live,
+      updatedAt: r.updatedAt > live ? r.updatedAt : live,
+      image: r.brandedFeaturedImageUrl || r.featuredImageUrl || null,
+      category: r.category?.name ?? "General",
+      tags: r.tags.map((t: { name: string }) => t.name),
+      author: r.author.name,
+    };
+  });
+  return opts.since ? posts.filter((p) => p.updatedAt >= opts.since! || p.publishedAt >= opts.since!) : posts;
 }

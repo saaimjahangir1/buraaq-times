@@ -10,6 +10,9 @@ export interface Post {
   authorRole: string;
   date: string;
   updated?: string;
+  /** Exact times for search engines (ISO 8601). `date`/`updated` are for display. */
+  publishedAt?: string;
+  updatedAt?: string;
   readTime: string;
   image: string;
   heroImage: string;
