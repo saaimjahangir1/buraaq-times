@@ -6,18 +6,21 @@ import { fieldsToPostUpdate, parseStoredFields } from "@/lib/post-fields";
 import { approvalOutcome, isLiveStatus } from "@/lib/proofread-policy";
 import { releaseStaleClaims, tellEditorAboutDecision } from "@/lib/proofread";
 import { notifyNewPostsSafely } from "@/lib/push-notify";
+import { isBlobUrl } from "@/lib/blob-storage";
 
 // Approve/reject also email the editor.
 export const maxDuration = 30;
 
-// What a proofreader may change: the text, plus the branded images (which
-// carry the headline, so they're regenerated if the headline changes).
+// What a proofreader may change: the text, the featured image and its alt
+// text, and the branded images (which carry the headline and the photo).
 const editsSchema = z.object({
   title: z.string().min(3, "The headline needs at least 3 characters").optional(),
   summary: z.string().min(3, "The summary needs at least 3 characters").optional(),
   bodyHtml: z.string().min(1, "The article body can't be empty").optional(),
-  brandedFeaturedImageUrl: z.string().optional().nullable(),
-  brandedSocialImageUrl: z.string().optional().nullable(),
+  featuredImageUrl: z.string().max(1000).optional().nullable(),
+  featuredImageAlt: z.string().max(300).optional().nullable(),
+  brandedFeaturedImageUrl: z.string().max(1000).optional().nullable(),
+  brandedSocialImageUrl: z.string().max(1000).optional().nullable(),
 });
 
 const actionSchema = z.discriminatedUnion("action", [
@@ -45,6 +48,8 @@ function editsFrom(body: Edits): Edits {
     title: body.title,
     summary: body.summary,
     bodyHtml: body.bodyHtml,
+    featuredImageUrl: body.featuredImageUrl,
+    featuredImageAlt: body.featuredImageAlt,
     brandedFeaturedImageUrl: body.brandedFeaturedImageUrl,
     brandedSocialImageUrl: body.brandedSocialImageUrl,
   };
@@ -53,8 +58,14 @@ function editsFrom(body: Edits): Edits {
 /** Merge a proofreader's edits into the stored review. */
 function applyEdits(review: { title: string; summary: string; bodyHtml: string; payload: string }, edits: Edits) {
   const fields = parseStoredFields(review.payload);
-  if (edits.brandedFeaturedImageUrl !== undefined) fields.brandedFeaturedImageUrl = edits.brandedFeaturedImageUrl;
-  if (edits.brandedSocialImageUrl !== undefined) fields.brandedSocialImageUrl = edits.brandedSocialImageUrl;
+  // An image may be removed (null), kept, or replaced with one stored on the
+  // site (uploaded or generated here) — never pointed at an outside address.
+  const image = (next: string | null | undefined, current: string | null | undefined) =>
+    next === undefined || next === current || next === null || isBlobUrl(next) ? (next === undefined ? current : next) : current;
+  fields.featuredImageUrl = image(edits.featuredImageUrl, fields.featuredImageUrl);
+  fields.brandedFeaturedImageUrl = image(edits.brandedFeaturedImageUrl, fields.brandedFeaturedImageUrl);
+  fields.brandedSocialImageUrl = image(edits.brandedSocialImageUrl, fields.brandedSocialImageUrl);
+  if (edits.featuredImageAlt !== undefined) fields.featuredImageAlt = edits.featuredImageAlt;
   return {
     title: edits.title ?? review.title,
     summary: edits.summary ?? review.summary,

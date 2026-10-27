@@ -25,11 +25,14 @@ import {
   CalendarClock,
   AlertTriangle,
   ImagePlus,
+  ImageOff,
+  RefreshCw,
   Undo2,
   SpellCheck,
   X,
 } from "lucide-react";
 import EditorToolbar from "@/components/cms/EditorToolbar";
+import MediaPicker from "@/components/cms/MediaPicker";
 import { cmsFetch } from "@/lib/cms-fetch";
 import { claimExpiresAt, hoursLeft, timeAgo, typeLabel } from "@/lib/proofread-policy";
 
@@ -55,6 +58,7 @@ interface FieldProps {
   categoryId: string | null;
   tagNames: string[];
   featuredImageUrl: string | null;
+  featuredImageAlt: string | null;
   brandedFeaturedImageUrl: string | null;
   brandedSocialImageUrl: string | null;
 }
@@ -95,6 +99,9 @@ export default function ReviewWorkspace({
     social: fields.brandedSocialImageUrl,
   });
   const [brandedTitle, setBrandedTitle] = useState(review.title);
+  // The featured photo (proofreaders can change it). Branded images are made from it.
+  const [featured, setFeatured] = useState({ url: fields.featuredImageUrl, alt: fields.featuredImageAlt ?? "" });
+  const [picking, setPicking] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [save, setSave] = useState<SaveState>({ kind: "idle" });
@@ -148,10 +155,12 @@ export default function ReviewWorkspace({
       title,
       summary,
       bodyHtml: editor?.getHTML() ?? review.bodyHtml,
+      featuredImageUrl: featured.url,
+      featuredImageAlt: featured.alt || null,
       brandedFeaturedImageUrl: branded.hero,
       brandedSocialImageUrl: branded.social,
     }),
-    [title, summary, editor, review.bodyHtml, branded]
+    [title, summary, editor, review.bodyHtml, branded, featured]
   );
 
   const saveNow = useCallback(async () => {
@@ -247,15 +256,16 @@ export default function ReviewWorkspace({
     act("approve");
   };
 
-  const regenerateBranded = async () => {
-    if (!fields.featuredImageUrl) return;
+  const regenerateBranded = async (sourceUrl = featured.url) => {
+    if (!sourceUrl) return;
+    if (title.trim().length < 3) return setError("Add a headline first — it's printed on the branded images.");
     setRegenerating(true);
     setError(null);
     try {
       const res = await cmsFetch("/api/cms/branded-image", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sourceUrl: fields.featuredImageUrl, title, categoryId: fields.categoryId }),
+        body: JSON.stringify({ sourceUrl, title, categoryId: fields.categoryId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Couldn't generate the images");
@@ -267,6 +277,22 @@ export default function ReviewWorkspace({
     } finally {
       setRegenerating(false);
     }
+  };
+
+  // New photo: the old branded images show the old photo, so drop them and make new ones.
+  const chooseImage = (url: string, alt: string) => {
+    setPicking(false);
+    setFeatured((f) => ({ url, alt: f.alt || alt }));
+    setBranded({ hero: null, social: null });
+    markDirty();
+    regenerateBranded(url);
+  };
+
+  const removeImage = () => {
+    if (!confirm("Remove the featured image (and its branded versions) from this story?")) return;
+    setFeatured({ url: null, alt: "" });
+    setBranded({ hero: null, social: null });
+    markDirty();
   };
 
   const headlineChangedSinceImages = Boolean(branded.hero) && title.trim() !== brandedTitle.trim();
@@ -505,43 +531,108 @@ export default function ReviewWorkspace({
           </div>
         )}
 
-        {fields.featuredImageUrl && (
+        {(canEdit || featured.url) && (
           <div className="glass rounded-glass p-5">
             <p className="mb-3 font-display text-sm font-bold text-white">Images</p>
-            <div className="relative aspect-video overflow-hidden rounded-xl">
-              <NextImage src={fields.featuredImageUrl} alt="" fill unoptimized className="object-cover" />
-            </div>
-            {branded.hero && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="relative aspect-video overflow-hidden rounded-lg">
-                  <NextImage src={branded.hero} alt="Branded hero" fill unoptimized className="object-cover" />
-                </div>
-                {branded.social && (
-                  <div className="relative aspect-[4/5] overflow-hidden rounded-lg">
-                    <NextImage src={branded.social} alt="Branded social" fill unoptimized className="object-cover" />
-                  </div>
-                )}
+            {featured.url ? (
+              <div className="relative aspect-video overflow-hidden rounded-xl">
+                <NextImage src={featured.url} alt={featured.alt} fill unoptimized className="object-cover" />
               </div>
+            ) : (
+              <button
+                onClick={() => setPicking(true)}
+                disabled={!canEdit}
+                className="focus-ring flex aspect-video w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/20 text-sm text-white/50 transition hover:border-signal hover:text-white"
+              >
+                <ImagePlus size={18} /> Add a featured image
+              </button>
             )}
-            {canEdit && headlineChangedSinceImages && (
-              <div className="mt-3 rounded-xl bg-amber-400/10 p-3 text-xs text-amber-100">
-                <p className="flex items-start gap-1.5">
-                  <AlertTriangle size={13} className="mt-0.5 shrink-0" /> You changed the headline, but the branded
-                  images still show the old one.
-                </p>
-                <button
-                  onClick={regenerateBranded}
-                  disabled={regenerating || title.trim().length < 3}
-                  className="focus-ring mt-2 flex w-full items-center justify-center gap-1.5 rounded-full bg-signal/20 py-2 text-xs font-semibold text-signal disabled:opacity-50"
-                >
-                  {regenerating ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
-                  {regenerating ? "Generating…" : "Regenerate branded images"}
-                </button>
+
+            {canEdit && featured.url && (
+              <>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setPicking(true)}
+                    disabled={regenerating}
+                    className="focus-ring flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/10 py-2 text-xs font-semibold text-white transition hover:bg-white/15 disabled:opacity-50"
+                  >
+                    <ImagePlus size={13} /> Change image
+                  </button>
+                  <button
+                    onClick={removeImage}
+                    disabled={regenerating}
+                    aria-label="Remove the featured image"
+                    className="focus-ring flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs text-white/50 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                  >
+                    <ImageOff size={13} /> Remove
+                  </button>
+                </div>
+                <input
+                  value={featured.alt}
+                  onChange={(e) => {
+                    setFeatured((f) => ({ ...f, alt: e.target.value }));
+                    markDirty();
+                  }}
+                  placeholder="Alt text (describe the photo)"
+                  maxLength={300}
+                  className="focus-ring mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-white/30"
+                />
+              </>
+            )}
+
+            {featured.url && (
+              <div className="mt-4 border-t border-white/10 pt-3">
+                <p className="mb-2 text-xs font-semibold text-white/60">Branded images</p>
+                {regenerating ? (
+                  <div className="flex aspect-video items-center justify-center gap-2 rounded-lg bg-white/5 text-xs text-white/50">
+                    <Loader2 size={14} className="animate-spin" /> Generating branded images…
+                  </div>
+                ) : branded.hero ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="relative aspect-video overflow-hidden rounded-lg">
+                        <NextImage src={branded.hero} alt="Branded hero" fill unoptimized className="object-cover" />
+                      </div>
+                      <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Hero (16:9)</p>
+                    </div>
+                    {branded.social && (
+                      <div>
+                        <div className="relative aspect-[4/5] overflow-hidden rounded-lg">
+                          <NextImage src={branded.social} alt="Branded social" fill unoptimized className="object-cover" />
+                        </div>
+                        <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Social (4:5)</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/40">None yet — the site shows the plain photo until they&apos;re generated.</p>
+                )}
+
+                {canEdit && headlineChangedSinceImages && !regenerating && (
+                  <p className="mt-3 flex items-start gap-1.5 rounded-xl bg-amber-400/10 p-3 text-xs text-amber-100">
+                    <AlertTriangle size={13} className="mt-0.5 shrink-0" /> You changed the headline, but the branded images
+                    still show the old one.
+                  </p>
+                )}
+                {canEdit && (
+                  <button
+                    onClick={() => regenerateBranded()}
+                    disabled={regenerating || title.trim().length < 3}
+                    className="focus-ring mt-3 flex w-full items-center justify-center gap-1.5 rounded-full bg-signal/20 py-2 text-xs font-semibold text-signal transition hover:bg-signal/30 disabled:opacity-50"
+                  >
+                    {regenerating ? <Loader2 size={13} className="animate-spin" /> : branded.hero ? <RefreshCw size={13} /> : <ImagePlus size={13} />}
+                    {regenerating ? "Generating…" : branded.hero ? "Regenerate branded images" : "Generate branded images"}
+                  </button>
+                )}
               </div>
             )}
           </div>
         )}
       </div>
+
+      {picking && (
+        <MediaPicker crop libraryUrl="/api/cms/media?for=desk" onClose={() => setPicking(false)} onSelect={chooseImage} />
+      )}
 
       {showReject && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">

@@ -16,20 +16,24 @@ export default function MediaPicker({
   onSelect,
   onClose,
   crop = false,
+  libraryUrl = "/api/cms/media",
 }: {
   onSelect: (url: string, alt: string) => void;
   onClose: () => void;
   crop?: boolean;
+  /** Where to list images from (the proofreading desk uses /api/cms/media?for=desk). */
+  libraryUrl?: string;
 }) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true);
-    const res = await fetch("/api/cms/media");
-    const data = await res.json();
+    const res = await fetch(libraryUrl);
+    const data = await res.json().catch(() => ({}));
     setItems(data.media ?? []);
     setLoading(false);
   };
@@ -40,16 +44,19 @@ export default function MediaPicker({
 
   const upload = async (file: File) => {
     setUploading(true);
+    setUploadError(null);
     const form = new FormData();
     form.append("file", file);
     form.append("altText", file.name.replace(/\.[^.]+$/, ""));
     if (crop) form.append("crop", "true");
     const res = await cmsFetch("/api/cms/media", { method: "POST", body: form });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setUploading(false);
     if (res.ok) {
       await load();
       onSelect(data.media.url, data.media.altText || "");
+    } else {
+      setUploadError(data.error || "Upload failed. Please try again.");
     }
   };
 
@@ -72,6 +79,7 @@ export default function MediaPicker({
             {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {uploading ? "Uploading..." : "Upload new image"}
           </button>
+          {uploadError && <p className="mt-2 text-center text-xs text-red-400">{uploadError}</p>}
           {crop && (
             <p className="mt-2 text-center text-xs text-white/30">
               New uploads are auto-cropped to 16:9, framed around the most interesting part of the photo.

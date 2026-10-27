@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { prisma } from "@/lib/prisma";
-import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
+import { requireApprovedUser, requireProofreader, isNextResponse } from "@/lib/cms-guard";
 import { smartCropTo16x9, shouldSkipCropping } from "@/lib/image-processing";
 import { uploadToBlob } from "@/lib/blob-storage";
 
 const MAX_SIZE = 8 * 1024 * 1024;
 const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
 
-export async function GET() {
-  const guard = await requireApprovedUser();
+export async function GET(req: NextRequest) {
+  // The proofreading desk sees the whole library, so a proofreader can pick
+  // any of the site's images for a story; writers see their own uploads.
+  const forDesk = req.nextUrl.searchParams.get("for") === "desk";
+  const guard = forDesk ? await requireProofreader() : await requireApprovedUser();
   if (isNextResponse(guard)) return guard;
 
   const media = await prisma.media.findMany({
-    where: guard.role === "ADMIN" ? {} : { uploadedById: guard.id },
+    where: guard.role === "ADMIN" || forDesk ? {} : { uploadedById: guard.id },
     orderBy: { createdAt: "desc" },
     include: { uploadedBy: { select: { name: true } } },
     take: 200,
@@ -22,7 +25,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const guard = await requireApprovedUser(req);
+  // Proofreaders can upload too (to change a story's featured image on the desk).
+  const guard = await requireApprovedUser(req, { allowProofreader: true });
   if (isNextResponse(guard)) return guard;
 
   const form = await req.formData();

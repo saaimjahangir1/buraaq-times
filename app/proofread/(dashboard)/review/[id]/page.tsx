@@ -78,6 +78,7 @@ export default async function ProofreadReviewPage({ params }: { params: { id: st
           categoryId: fields.categoryId ?? null,
           tagNames: fields.tagNames ?? [],
           featuredImageUrl: fields.featuredImageUrl ?? null,
+          featuredImageAlt: fields.featuredImageAlt ?? null,
           brandedFeaturedImageUrl: fields.brandedFeaturedImageUrl ?? null,
           brandedSocialImageUrl: fields.brandedSocialImageUrl ?? null,
         }}
