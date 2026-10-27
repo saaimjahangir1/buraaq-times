@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Bell, BellRing, Loader2 } from "lucide-react";
 
 // The bell in the top bar: turns "new story" notifications on or off for
@@ -30,6 +31,8 @@ export default function NotifyBell() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<CSSProperties | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -46,10 +49,29 @@ export default function NotifyBell() {
     })();
   }, []);
 
+  // The panel is rendered at page level (not inside the top bar), so it sits above
+  // everything — including the floating feather button — and is placed under the bell.
+  useEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = wrap.current?.getBoundingClientRect();
+      if (!r) return;
+      setPos(
+        window.innerWidth < 640
+          ? { position: "fixed", left: 16, right: 16, top: r.bottom + 14 }
+          : { position: "fixed", top: r.bottom + 12, right: Math.max(16, window.innerWidth - r.right), width: 288 }
+      );
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!wrap.current?.contains(t) && !panel.current?.contains(t)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onDown);
@@ -133,11 +155,16 @@ export default function NotifyBell() {
         {on && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-signal" aria-hidden="true" />}
       </button>
 
-      {open && (
-        // Positioning lives on a plain wrapper (the glass panel's own position rule would override it):
-        // full-width under the top bar on phones, a dropdown under the bell from tablet size up.
-        <div className="fixed inset-x-4 top-20 z-50 sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+10px)] sm:w-72">
-        <div role="dialog" aria-label="Story notifications" className="glass-strong rounded-2xl p-4 text-left shadow-glass-dark">
+      {open && pos && createPortal(
+        // Full-width under the top bar on phones, a dropdown under the bell from tablet size up.
+        // z-[95]: above the floating feather button (z-[91–93]). Solid frosted background so the
+        // page underneath doesn't show through the text.
+        <div ref={panel} style={pos} className="z-[95]">
+        <div
+          role="dialog"
+          aria-label="Story notifications"
+          className="rounded-2xl border border-black/10 bg-paper/95 p-4 text-left shadow-[0_12px_40px_-8px_rgba(0,0,0,0.45)] backdrop-blur-xl dark:border-signal/20 dark:bg-charcoal/95"
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-display text-sm font-bold text-ink dark:text-white">New story alerts</p>
@@ -181,7 +208,8 @@ export default function NotifyBell() {
             </p>
           )}
         </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
