@@ -76,6 +76,8 @@ model Post {
   status      String    @default("DRAFT")
   scheduledAt DateTime?
   publishedAt DateTime?
+  // When readers' devices were sent the "new story" push notification.
+  notifiedAt  DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -325,4 +327,16 @@ model AppSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// Browsers/devices that turned on "Notify me about new stories" (web push).
+model PushSubscription {
+  id            String    @id @default(cuid())
+  endpoint      String    @unique
+  p256dh        String
+  auth          String
+  userAgent     String?
+  failures      Int       @default(0)
+  lastSuccessAt DateTime?
+  createdAt     DateTime  @default(now())
 }

@@ -6,6 +6,7 @@ import { notify } from "@/lib/notifications";
 import { postFieldsSchema, fieldsToPostUpdate } from "@/lib/post-fields";
 import { editorPatchDecision, isOpenReview } from "@/lib/proofread-policy";
 import { latestReviewFor, releaseStaleClaims, serializeReviewForEditor } from "@/lib/proofread";
+import { notifyNewPostsSafely } from "@/lib/push-notify";
 
 const updateSchema = postFieldsSchema.extend({
   status: z.enum(["DRAFT", "PUBLISHED", "SCHEDULED", "ARCHIVED"]).optional(),
@@ -124,6 +125,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       `"${post.title}" has been published.`,
       `/cms/${post.type === "news" ? "news" : "articles"}/${post.id}/edit`
     );
+    // Tell readers who turned on notifications (only the first time it goes live).
+    await notifyNewPostsSafely();
     if (post.seoScore !== null && post.seoScore < 50) {
       await notify(
         post.authorId,

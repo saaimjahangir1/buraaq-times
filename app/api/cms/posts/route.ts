@@ -4,6 +4,7 @@ import slugify from "slugify";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
 import { canAccessType } from "@/lib/auth";
+import { notifyNewPostsSafely } from "@/lib/push-notify";
 
 const createSchema = z.object({
   type: z.enum(["news", "article"]),
@@ -170,6 +171,9 @@ export async function POST(req: NextRequest) {
   await prisma.postRevision.create({
     data: { postId: post.id, title: post.title, bodyHtml: post.bodyHtml, editorId: guard.id },
   });
+
+  // Published straight away → tell readers who turned on notifications.
+  if (post.status === "PUBLISHED") await notifyNewPostsSafely();
 
   return NextResponse.json({ post });
 }

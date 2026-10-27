@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Search, User, Menu, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import NotifyBell from "./NotifyBell";
 import BrandMark from "./BrandMark";
 
 const LINKS = [
@@ -58,6 +59,7 @@ export default function Navbar() {
             >
               <Search size={18} />
             </Link>
+            <NotifyBell />
             <ThemeToggle />
             {/* Sign-in moves into the mobile panel below; stays inline from sm: up */}
             <Link

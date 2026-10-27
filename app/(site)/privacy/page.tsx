@@ -44,6 +44,11 @@ export default function PrivacyPage() {
           confirmed and when we last emailed you.
         </li>
         <li>
+          <strong>Story notifications:</strong> if you turn on the bell, your browser gives us an anonymous delivery
+          address for this device (no name or email), which we use only to send you new-story alerts. Turning the bell
+          off — or blocking notifications in your browser — deletes it.
+        </li>
+        <li>
           <strong>AI Resume Builder:</strong> what you type is saved in your own browser so you don&apos;t lose your
           draft. When your resume is created we save a copy of it — the resume and its PDF, including your name and
           contact details — and our editorial team keeps these in a private Google Drive. If you choose &ldquo;Write my
@@ -163,6 +168,7 @@ export default function PrivacyPage() {
         <li>our email provider — delivers contact-form messages, account emails and the daily briefing;</li>
         <li>Google Analytics — visitor statistics, as described in section 2;</li>
         <li>Google Drive — where our editorial team stores saved resumes;</li>
+        <li>your browser&apos;s push service (Google, Mozilla, Apple or Microsoft) — delivers story notifications if you turn them on;</li>
         <li>Google AdSense — advertising, as described above.</li>
       </ul>
       <p>We may also disclose information if required by law or to protect our rights and the safety of our users.</p>

@@ -5,6 +5,7 @@ import { requireProofreader, isNextResponse } from "@/lib/cms-guard";
 import { fieldsToPostUpdate, parseStoredFields } from "@/lib/post-fields";
 import { approvalOutcome, isLiveStatus } from "@/lib/proofread-policy";
 import { releaseStaleClaims, tellEditorAboutDecision } from "@/lib/proofread";
+import { notifyNewPostsSafely } from "@/lib/push-notify";
 
 // Approve/reject also email the editor.
 export const maxDuration = 30;
@@ -204,6 +205,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       });
 
       await tellEditorAboutDecision(id);
+      // Approved and live now → tell readers who turned on notifications.
+      await notifyNewPostsSafely();
       return NextResponse.json({ ok: true, decision: "APPROVED" });
     }
 

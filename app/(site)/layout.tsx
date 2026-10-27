@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   title: { default: `${SITE_NAME} — Journalism, Reimagined`, template: `%s | ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  // Installable as a home-screen app (iPhone/iPad need this for notifications).
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "black-translucent" },
   // Index everything public, and let Google show large image previews and full
   // snippets (needed for Top Stories, Discover and rich results).
   robots: {

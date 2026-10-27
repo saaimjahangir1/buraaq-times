@@ -4,6 +4,8 @@
 #     anything is due (every 4 hours per unclaimed piece), so most runs send nothing.
 #  2. IndexNow — tells Bing / ChatGPT search about stories published or edited
 #     in the last 30 minutes.
+#  3. Push notifications — announces stories that just went live (e.g. scheduled
+#     ones) to readers who turned on the bell.
 #   */15 * * * * /bin/bash /var/www/buraaq-times/scripts/cron-proofread-reminders.sh
 cd "$(dirname "$0")/.." || exit 1
 SECRET=$(grep -h '^CRON_SECRET=' .env .env.local .env.production 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'"'")
@@ -14,3 +16,4 @@ fi
 PORT="${PORT:-9000}"
 echo "$(date '+%F %T') reminders $(curl -sS -m 90 -H "Authorization: Bearer $SECRET" "http://localhost:$PORT/api/cron/proofread-reminders")"
 echo "$(date '+%F %T') indexnow $(curl -sS -m 90 -H "Authorization: Bearer $SECRET" "http://localhost:$PORT/api/cron/indexnow${1:+?$1}")"
+echo "$(date '+%F %T') push $(curl -sS -m 90 -H "Authorization: Bearer $SECRET" "http://localhost:$PORT/api/cron/push")"
