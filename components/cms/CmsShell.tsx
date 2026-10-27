@@ -17,6 +17,7 @@ import {
   ExternalLink,
   BarChart3,
   Activity,
+  FileText,
   Mail,
   SpellCheck,
 } from "lucide-react";
@@ -43,6 +44,7 @@ const NAV: NavItem[] = [
   { href: "/cms/media", label: "Media", icon: <ImageIcon size={17} />, roles: ["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR"] },
   { href: "/cms/comments", label: "Comments", icon: <MessageSquare size={17} />, roles: ["ADMIN"] },
   { href: "/cms/newsletter", label: "Newsletter", icon: <Mail size={17} />, roles: ["ADMIN"] },
+  { href: "/cms/resumes", label: "Resumes", icon: <FileText size={17} />, roles: ["ADMIN"] },
   { href: "/cms/users", label: "Users", icon: <Users size={17} />, roles: ["ADMIN"] },
   { href: "/cms/profile", label: "Profile", icon: <UserCircle size={17} />, roles: ["ADMIN", "NEWS_EDITOR", "ARTICLE_EDITOR"] },
 ];

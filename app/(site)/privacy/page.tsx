@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const UPDATED = "25 October 2026";
+const UPDATED = "27 October 2026";
 const CONTACT_EMAIL = "theburaaqtimes@gmail.com";
 
 export default function PrivacyPage() {
@@ -45,8 +45,10 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>AI Resume Builder:</strong> what you type is saved in your own browser so you don&apos;t lose your
-          draft. If you choose &ldquo;Write my resume&rdquo;, your experience, education, projects and skills are sent to
-          an AI service to write the text. Your name and contact details are not sent, and we don&apos;t store resumes.
+          draft. When your resume is created we save a copy of it — the resume and its PDF, including your name and
+          contact details — and our editorial team keeps these in a private Google Drive. If you choose &ldquo;Write my
+          resume&rdquo;, your experience, education, projects and skills are sent to an AI service to write the text; your
+          name and contact details are not sent to the AI. To have your saved resume deleted, contact us.
         </li>
       </ul>
       <p>
@@ -160,6 +162,7 @@ export default function PrivacyPage() {
         </li>
         <li>our email provider — delivers contact-form messages, account emails and the daily briefing;</li>
         <li>Google Analytics — visitor statistics, as described in section 2;</li>
+        <li>Google Drive — where our editorial team stores saved resumes;</li>
         <li>Google AdSense — advertising, as described above.</li>
       </ul>
       <p>We may also disclose information if required by law or to protect our rights and the safety of our users.</p>
@@ -168,7 +171,7 @@ export default function PrivacyPage() {
       <p>
         Comments stay until they are removed by us or at your request. Newsletter addresses are kept while you are
         subscribed; after you unsubscribe we keep a record that you did, so we don&apos;t email you again, and delete
-        it if you ask. Contact-form messages stay in our inbox for as
+        it if you ask. Saved resumes are kept until you ask us to delete them. Contact-form messages stay in our inbox for as
         long as needed to deal with your enquiry. Rate-limiting records expire within minutes. Server logs are kept by
         our hosting provider for a limited period.
       </p>

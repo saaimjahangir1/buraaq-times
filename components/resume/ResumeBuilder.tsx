@@ -142,6 +142,43 @@ export default function ResumeBuilder() {
 
   const topRef = useRef<HTMLDivElement>(null);
 
+  /* ---------- saved copy (sent to Buraaq Times) ---------- */
+  // One saved copy per visit: created when the first resume is shown, then
+  // replaced with the latest version (edits, colour) whenever they download.
+  const savedRef = useRef<{ id: string; key: string } | null>(null);
+  const saveQueue = useRef<Promise<void>>(Promise.resolve());
+
+  const saveCopy = (data: ResumeData, colour: string, pdfBlob?: Blob) => {
+    saveQueue.current = saveQueue.current.then(async () => {
+      try {
+        const blob = pdfBlob ?? (await (await import("./ResumePDF")).renderResumePdf(data, colour));
+        const send = (method: "POST" | "PUT") => {
+          const form = new FormData();
+          form.append("pdf", blob, "resume.pdf");
+          form.append("data", JSON.stringify(data));
+          const saved = savedRef.current;
+          return fetch(method === "PUT" && saved ? `/api/resume/save?id=${encodeURIComponent(saved.id)}` : "/api/resume/save", {
+            method,
+            headers: method === "PUT" && saved ? { "x-resume-key": saved.key } : undefined,
+            body: form,
+          });
+        };
+        if (savedRef.current) {
+          const res = await send("PUT");
+          if (res.ok || res.status === 409) return;
+          savedRef.current = null; // gone (moved to Drive) — save a new copy
+        }
+        const res = await send("POST");
+        if (res.ok) {
+          const json = (await res.json()) as { id?: string; key?: string };
+          if (json.id && json.key) savedRef.current = { id: json.id, key: json.key };
+        }
+      } catch {
+        /* saving a copy must never get in the visitor's way */
+      }
+    });
+  };
+
   /* ---------- draft persistence (this browser only) ---------- */
 
   useEffect(() => {
@@ -209,6 +246,7 @@ export default function ResumeBuilder() {
     setEditing(false);
     setError(null);
     scrollToTop();
+    saveCopy(data, accent);
   };
 
   const buildPlain = () => {
@@ -229,7 +267,7 @@ export default function ResumeBuilder() {
       const res = await fetch("/api/resume/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Name and contact details never leave the browser.
+        // The AI never sees name or contact details.
         body: JSON.stringify(withoutContactDetails(cleaned)),
       });
       const data = (await res.json().catch(() => ({}))) as { ai?: AiResumeContent; error?: string };
@@ -257,6 +295,7 @@ export default function ResumeBuilder() {
     try {
       const { renderResumePdf } = await import("./ResumePDF");
       const blob = await renderResumePdf(resume, accent);
+      saveCopy(resume, accent, blob);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -288,6 +327,7 @@ export default function ResumeBuilder() {
                 ? "Read it through and fix anything that isn't quite right before you download."
                 : "Built straight from your notes, without AI. Edit the wording if you like, then download."}
             </p>
+            <p className="mt-1 text-xs opacity-50">A copy of this resume is saved with Buraaq Times.</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className={secondaryBtn} onClick={() => setResume(null)}>
@@ -753,9 +793,12 @@ export default function ResumeBuilder() {
       </div>
 
       <p className="mt-6 text-xs leading-relaxed opacity-60">
-        Your draft is saved in this browser only. We don&apos;t store your resume. When you use AI, your experience,
-        education, projects and skills are sent to Google Gemini to write the text; your name and contact details
-        never leave your device.
+        Your draft is saved in this browser while you work. When your resume is created, a copy of it (including your
+        name and contact details) is saved by Buraaq Times. When you use AI, your experience, education, projects and
+        skills are sent to Google Gemini to write the text; your name and contact details are not sent to the AI.{" "}
+        <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
+          Privacy Policy
+        </a>
       </p>
     </div>
   );

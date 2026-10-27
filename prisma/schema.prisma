@@ -294,3 +294,35 @@ model NewsletterIssue {
   createdAt   DateTime  @default(now())
   completedAt DateTime?
 }
+
+// Resumes made with the public Resume Builder, waiting for an admin to move
+// them to Google Drive ("Save to Drive" on the CMS Resumes page deletes each
+// one here after it's uploaded).
+model Resume {
+  id          String    @id @default(cuid())
+  name        String
+  headline    String?
+  email       String?
+  phone       String?
+  location    String?
+  // The resume content as shown to the visitor (ResumeData JSON).
+  data        String
+  // The exact PDF the visitor downloaded (or would download).
+  pdf         Bytes
+  pdfSize     Int
+  // Lets the visitor's browser update its own copy (sha256 of a random key).
+  editKeyHash String
+  // Set while a "Save to Drive" run is uploading it, so two admins can't upload it twice.
+  savingAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([createdAt])
+}
+
+// Small site-wide settings, e.g. the connected Google Drive account.
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
