@@ -89,7 +89,11 @@ export default function Hero({ post }: { post: Post }) {
         />
       </div>
 
-      <div className="relative min-h-[520px] w-full md:aspect-video md:min-h-[420px]">
+      {/* The card sits in normal flow (not absolutely positioned), so a long headline or
+          summary makes the hero taller instead of spilling out over the logo. From tablet
+          size up, the invisible 16:9 spacer keeps the wide shape as a minimum. */}
+      <div className="relative grid min-h-[520px] w-full grid-cols-1 md:min-h-[420px]">
+        <div aria-hidden="true" className="col-start-1 row-start-1 hidden w-full self-start md:block md:aspect-video" />
         <div ref={imageWrapRef} className="absolute inset-0 scale-110">
           <Image src={post.image} alt="" fill priority className="object-cover" sizes="100vw" />
         </div>
@@ -106,17 +110,17 @@ export default function Hero({ post }: { post: Post }) {
           }}
         />
 
-        <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
+        <div className="relative col-start-1 row-start-1 flex flex-col justify-end px-4 pb-4 pt-20 sm:px-6 sm:pb-6 md:p-12 md:pt-24">
           <div className="glass-media mx-auto max-w-2xl rounded-glass p-6 text-center md:p-8">
             <div
               ref={badgeRef}
-              className="mb-3 flex items-center justify-center gap-3 font-mono text-xs uppercase tracking-widest text-white/80"
+              className="mb-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-mono text-xs uppercase tracking-wider text-white/80 sm:tracking-widest"
             >
               <span className="rounded-full bg-signal px-3 py-1 font-semibold text-white">
                 {post.category}
               </span>
-              <span>{post.date}</span>
-              <span className="flex items-center gap-1">
+              <span className="whitespace-nowrap">{post.date}</span>
+              <span className="flex items-center gap-1 whitespace-nowrap">
                 <Clock size={12} /> {post.readTime}
               </span>
             </div>
@@ -126,18 +130,18 @@ export default function Hero({ post }: { post: Post }) {
             >
               {post.title}
             </h1>
-            <p ref={summaryRef} className="mt-3 text-sm text-white/80 md:text-base">
+            <p ref={summaryRef} className="mt-3 line-clamp-4 text-sm text-white/80 sm:line-clamp-5 md:line-clamp-none md:text-base">
               {post.summary}
             </p>
-            <div ref={ctaRef} className="mt-5 flex items-center justify-between">
-              <span className="text-sm text-white/70">
+            <div ref={ctaRef} className="mt-5 flex items-center justify-between gap-3">
+              <span className="min-w-0 text-left text-sm text-white/70">
                 By <span className="font-medium text-white">{post.author}</span>
               </span>
               <Link
                 href={postHref(post)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lg-droplet focus-ring group flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/90"
+                className="lg-droplet focus-ring group flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-white/90"
               >
                 Read More
                 <ArrowUpRight
