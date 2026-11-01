@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { verifyPasswordOrDummy, needsRehash, hashPassword, createPending2FAToken } from "@/lib/auth";
+import { verifyPasswordOrDummy, needsRehash, hashPassword, createPending2FAToken, isTrustedDevice, trustCookieName } from "@/lib/auth";
+import { issueSession } from "@/lib/session";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const schema = z.object({
@@ -40,6 +41,10 @@ export async function POST(req: NextRequest) {
   // Two-factor sign-in is required for every account. Nobody gets a session
   // from the password alone: either enter a code, or set up an authenticator first.
   if (user.totpEnabled && user.totpSecret) {
+    // "Remember me" was ticked when this browser last entered a code, less than 7 days ago.
+    if (await isTrustedDevice(req.cookies.get(trustCookieName(user.id))?.value, user)) {
+      return issueSession(user, Boolean(remember), { trustedDevice: true }, area);
+    }
     const tempToken = await createPending2FAToken(user.id, Boolean(remember), area, "2fa-pending");
     return NextResponse.json({ requires2FA: true, tempToken });
   }

@@ -1,6 +1,6 @@
 import "server-only";
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionToken, sessionCookieName, Role, SessionArea, UserStatus } from "./auth";
+import { createSessionToken, createTrustToken, sessionCookieName, trustCookieName, Role, SessionArea, TRUST_DAYS, UserStatus } from "./auth";
 import { clearCsrfCookie, generateCsrfToken, setCsrfCookie } from "./csrf";
 
 export async function issueSession(
@@ -49,5 +49,23 @@ export function clearSession(req: NextRequest, res: NextResponse, area: SessionA
   res.cookies.set(sessionCookieName(area), "", { path: "/", maxAge: 0 });
   const other: SessionArea = area === "desk" ? "cms" : "desk";
   if (!req.cookies.get(sessionCookieName(other))?.value) clearCsrfCookie(res);
+  return res;
+}
+
+/**
+ * "Remember me" with 2FA: marks this browser as trusted for 7 days, so the next
+ * sign-ins here only need the password. Only readable by the sign-in API.
+ */
+export async function rememberDevice(
+  res: NextResponse,
+  user: { id: string; totpEnabled: boolean; totpSecret: string | null; sessionVersion?: number | null }
+) {
+  res.cookies.set(trustCookieName(user.id), await createTrustToken(user), {
+    httpOnly: true,
+    secure: process.env.VERCEL_ENV === "production",
+    sameSite: "lax",
+    path: "/api/cms/auth",
+    maxAge: TRUST_DAYS * 24 * 60 * 60,
+  });
   return res;
 }

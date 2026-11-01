@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyPending2FAToken } from "@/lib/auth";
 import { checkCode } from "@/lib/two-factor";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { issueSession } from "@/lib/session";
+import { issueSession, rememberDevice } from "@/lib/session";
 
 const schema = z.object({
   tempToken: z.string().min(1).max(2000),
@@ -30,5 +30,8 @@ export async function POST(req: NextRequest) {
   const check = await checkCode(user, user.totpSecret, parsed.data.code);
   if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
-  return issueSession(user, pending.remember, {}, pending.area);
+  const res = await issueSession(user, pending.remember, {}, pending.area);
+  // "Remember me" → no code needed on this device for the next 7 days.
+  if (pending.remember) await rememberDevice(res, user);
+  return res;
 }

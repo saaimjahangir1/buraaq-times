@@ -171,14 +171,19 @@ export default function ProofreadLoginPage() {
           />
         </div>
 
-        <label className="flex items-center gap-2 text-xs text-white/50">
+        <label className="flex items-start gap-2 text-xs text-white/50">
           <input
             type="checkbox"
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
-            className="accent-signal"
+            className="mt-0.5 accent-signal"
           />
-          Remember me
+          <span>
+            Remember me
+            <span className="block text-[11px] text-white/35">
+              Skip the authenticator code on this device for 7 days. Don&apos;t tick this on a shared computer.
+            </span>
+          </span>
         </label>
 
         {error && <p className="text-sm text-red-400">{error}</p>}

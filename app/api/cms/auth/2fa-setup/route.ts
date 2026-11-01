@@ -5,7 +5,7 @@ import { verifyPending2FAToken } from "@/lib/auth";
 import { generateTotpSecret, otpauthUrl } from "@/lib/totp";
 import { checkCode } from "@/lib/two-factor";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
-import { issueSession } from "@/lib/session";
+import { issueSession, rememberDevice } from "@/lib/session";
 import { notify } from "@/lib/notifications";
 
 // Sign-in step for accounts without two-factor sign-in yet (it's required for
@@ -53,5 +53,7 @@ export async function POST(req: NextRequest) {
     data: { totpSecret: user.totpPendingSecret, totpPendingSecret: null, totpEnabled: true, totpLastStep: check.step },
   });
   await notify(user.id, "ACCOUNT", "Two-factor authentication enabled", "A code from your authenticator app is now needed at sign-in.");
-  return issueSession(updated, pending.remember, {}, pending.area);
+  const res = await issueSession(updated, pending.remember, {}, pending.area);
+  if (pending.remember) await rememberDevice(res, updated);
+  return res;
 }

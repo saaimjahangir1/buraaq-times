@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "./prisma";
 
 export * from "./auth-shared";
@@ -150,5 +151,50 @@ export async function verifyPending2FAToken(
     return { sub: payload.sub, remember: Boolean(payload.remember), area: parseArea(payload.area) };
   } catch {
     return null;
+  }
+}
+
+/* ---------- "Remember me": skip the 2FA code on this device for 7 days ---------- */
+
+// After someone enters a correct code with "Remember me" ticked, their browser
+// gets a signed "trusted device" cookie. Signing in again from that browser
+// within 7 days needs only the password. It stops working early if their 2FA
+// is reset or moved to a new phone, or their password is reset (all accounts
+// signed out). One cookie per account, so people sharing a computer don't mix.
+
+export const TRUST_DAYS = 7;
+
+export function trustCookieName(userId: string) {
+  return `bt_2fa_${crypto.createHash("sha256").update(userId).digest("hex").slice(0, 16)}`;
+}
+
+// Ties the trust to the current authenticator without putting its secret in the cookie.
+function authenticatorFingerprint(totpSecret: string) {
+  return crypto.createHmac("sha256", secretKey()).update(`totp:${totpSecret}`).digest("base64url").slice(0, 22);
+}
+
+type TrustUser = { id: string; totpEnabled: boolean; totpSecret: string | null; sessionVersion?: number | null };
+
+export async function createTrustToken(user: TrustUser) {
+  if (!user.totpSecret) throw new Error("No authenticator set up");
+  return new SignJWT({ purpose: "2fa-trust", sub: user.id, sv: user.sessionVersion ?? 0, fp: authenticatorFingerprint(user.totpSecret) })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${TRUST_DAYS}d`)
+    .sign(secretKey());
+}
+
+export async function isTrustedDevice(token: string | undefined, user: TrustUser): Promise<boolean> {
+  if (!token || !user.totpEnabled || !user.totpSecret) return false;
+  try {
+    const { payload } = await jwtVerify(token, secretKey(), VERIFY);
+    return (
+      payload.purpose === "2fa-trust" &&
+      payload.sub === user.id &&
+      payload.sv === (user.sessionVersion ?? 0) &&
+      payload.fp === authenticatorFingerprint(user.totpSecret)
+    );
+  } catch {
+    return false; // expired (older than 7 days), tampered with, or signed with another key
   }
 }
