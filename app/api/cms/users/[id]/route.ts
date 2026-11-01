@@ -15,7 +15,24 @@ const schema = z.object({
   proofreaderStatus: access.nullable().optional(),
   // Admin vouches for the address (e.g. the verification email never arrived).
   emailVerified: z.literal(true).optional(),
+  // Lost phone: turn off their 2FA and sign them out everywhere. They set up a
+  // new authenticator at their next sign-in (2FA is required for everyone).
+  reset2fa: z.literal(true).optional(),
 });
+
+// What the admin page gets back — never password hashes, 2FA secrets or tokens.
+const SAFE_USER = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  status: true,
+  proofreaderStatus: true,
+  emailVerified: true,
+  totpEnabled: true,
+  bio: true,
+  createdAt: true,
+} as const;
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const guard = await requireApprovedUser(req);
@@ -33,6 +50,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     select: { role: true, status: true, proofreaderStatus: true },
   });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (body.reset2fa) {
+    if (params.id === guard.id) {
+      return NextResponse.json(
+        { error: "You can't reset your own 2FA here — use Profile → Move to a new phone, or ask another admin." },
+        { status: 400 }
+      );
+    }
+    const user = await prisma.user.update({
+      where: { id: params.id },
+      data: { totpEnabled: false, totpSecret: null, totpPendingSecret: null, totpLastStep: null, totpFailures: 0, totpLockedUntil: null, sessionVersion: { increment: 1 } },
+      select: SAFE_USER,
+    });
+    await notify(user.id, "ACCOUNT", "Two-factor sign-in was reset", `${guard.name} reset your 2FA. Set up a new authenticator app at your next sign-in.`);
+    return NextResponse.json({ user });
+  }
 
   const role = body.role ?? before.role;
   const data: {
@@ -68,7 +101,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
   data.proofreaderStatus = proofreader;
 
-  const user = await prisma.user.update({ where: { id: params.id }, data });
+  const updated = await prisma.user.update({ where: { id: params.id }, data });
+  const user = { ...updated };
 
   // Tell them about decisions that changed.
   const wasWriter = writerState(before);
@@ -89,5 +123,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  return NextResponse.json({ user });
+  const safe = await prisma.user.findUnique({ where: { id: params.id }, select: SAFE_USER });
+  return NextResponse.json({ user: safe });
 }

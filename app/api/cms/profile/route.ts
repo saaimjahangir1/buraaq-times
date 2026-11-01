@@ -17,6 +17,11 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
 
-  const user = await prisma.user.update({ where: { id: guard.id }, data: parsed.data });
+  const user = await prisma.user.update({
+    where: { id: guard.id },
+    data: parsed.data,
+    // Never send the password hash or 2FA secret back to the browser.
+    select: { id: true, name: true, email: true, role: true, status: true, bio: true, avatarUrl: true, totpEnabled: true },
+  });
   return NextResponse.json({ user });
 }

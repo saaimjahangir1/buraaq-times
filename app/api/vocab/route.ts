@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { askClaudeForJSON, AnthropicNotConfiguredError } from "@/lib/anthropic";
 
 interface VocabResult {
@@ -16,14 +17,19 @@ Keep the meaning under 20 words. Use the word's sense as used in the given sente
 
 export async function POST(req: NextRequest) {
   try {
-    const { word, sentence } = await req.json();
-    if (!word || typeof word !== "string") {
+    const { ok } = await rateLimit(`ai-vocab:${clientIp(req)}`, 40, 10 * 60_000);
+    if (!ok) return NextResponse.json({ error: "Too many requests — try again in a few minutes." }, { status: 429 });
+
+    const raw = await req.json();
+    const word = typeof raw?.word === "string" ? raw.word.trim().slice(0, 60) : "";
+    const sentence = typeof raw?.sentence === "string" ? raw.sentence.slice(0, 600) : "";
+    if (!word) {
       return NextResponse.json({ error: "Missing 'word'" }, { status: 400 });
     }
 
     const result = await askClaudeForJSON<VocabResult>(
       SYSTEM,
-      `Word: "${word}"\nSentence: "${sentence ?? ""}"`
+      `Word: "${word}"\nSentence: "${sentence}"`
     );
 
     return NextResponse.json(result);

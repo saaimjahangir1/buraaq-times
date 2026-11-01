@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cronAuthorized } from "@/lib/cron-auth";
 import { getPostsForIndexing } from "@/lib/public-data";
 import { postHref } from "@/lib/types";
 import { SITE_URL } from "@/lib/seo";
@@ -12,8 +13,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!cronAuthorized(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!/^https:\/\//.test(SITE_URL) || /localhost|vercel\.app|\d+\.\d+\.\d+\.\d+/.test(SITE_URL)) {

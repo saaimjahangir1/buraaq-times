@@ -36,7 +36,13 @@ function getTransporter() {
 export async function sendMail({ to, subject, html, replyTo, headers }: MailInput): Promise<{ sent: boolean }> {
   const t = getTransporter();
   if (!t) {
-    console.log(`\n[mailer] SMTP not configured — would have sent:\nTo: ${to}\nSubject: ${subject}\n${html}\n`);
+    // The email body can hold sign-in, reset and verification links — never put
+    // it in production logs. Locally (development) it's printed so you can click it.
+    if (process.env.NODE_ENV === "production") {
+      console.warn(`[mailer] SMTP not configured — an email was NOT sent (subject: ${subject}).`);
+    } else {
+      console.log(`\n[mailer] SMTP not configured — would have sent:\nTo: ${to}\nSubject: ${subject}\n${html}\n`);
+    }
     return { sent: false };
   }
   await t.sendMail({

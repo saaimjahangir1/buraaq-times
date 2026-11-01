@@ -3,12 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
 import { generateBrandedImages } from "@/lib/image-processing";
-import { uploadToBlob, isBlobUrl } from "@/lib/blob-storage";
+import { uploadToBlob, isBlobUrl, fetchBlob } from "@/lib/blob-storage";
 
 const schema = z.object({
-  sourceUrl: z.string().min(1),
-  title: z.string().min(1),
-  categoryId: z.string().optional().nullable(),
+  sourceUrl: z.string().min(1).max(1000),
+  title: z.string().min(1).max(300),
+  categoryId: z.string().max(100).optional().nullable(),
 });
 
 export async function POST(req: NextRequest) {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const guard = await requireApprovedUser(req, { allowProofreader: true });
   if (isNextResponse(guard)) return guard;
 
-  const parsed = schema.safeParse(await req.json());
+  const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
   }
@@ -38,9 +38,7 @@ export async function POST(req: NextRequest) {
 
   let sourceBytes: Buffer;
   try {
-    const res = await fetch(effectiveSourceUrl);
-    if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
-    sourceBytes = Buffer.from(await res.arrayBuffer());
+    sourceBytes = await fetchBlob(effectiveSourceUrl);
   } catch (err) {
     console.error("Could not fetch source image from Blob:", err);
     return NextResponse.json({ error: "Source image not found" }, { status: 404 });

@@ -182,7 +182,7 @@ export function renderDigest(posts: DigestPost[], token: string | null, now = ne
       const url = `${SITE_URL}${postHref({ type: p.type as "news" | "article", slug: p.slug })}`;
       const img =
         i === 0 && p.featuredImageUrl
-          ? `<a href="${url}"><img src="${p.featuredImageUrl}" alt="" width="544" style="display:block;width:100%;max-width:544px;height:auto;border-radius:12px;margin-bottom:14px;border:0;"></a>`
+          ? `<a href="${url}"><img src="${escapeHtml(p.featuredImageUrl)}" alt="" width="544" style="display:block;width:100%;max-width:544px;height:auto;border-radius:12px;margin-bottom:14px;border:0;"></a>`
           : "";
       const label = [p.type === "news" ? "News" : "Article", p.category?.name].filter(Boolean).join(" · ");
       return `<tr><td style="padding:${i === 0 ? "0" : "18px"} 0 18px;${i === 0 ? "" : "border-top:1px solid #2a2a33;"}">

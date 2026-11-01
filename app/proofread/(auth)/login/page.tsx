@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
+import TwoFactorLoginSetup from "@/components/cms/TwoFactorLoginSetup";
 import { SpellCheck, Loader2, ShieldCheck } from "lucide-react";
 
 export default function ProofreadLoginPage() {
@@ -15,6 +16,7 @@ export default function ProofreadLoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [tempToken, setTempToken] = useState<string | null>(null);
+  const [setupToken, setSetupToken] = useState<string | null>(null);
   const [code, setCode] = useState("");
 
   const submit = async (e: React.FormEvent) => {
@@ -31,6 +33,10 @@ export default function ProofreadLoginPage() {
       if (!res.ok) throw new Error(data.error || "Login failed");
       if (data.requires2FA) {
         setTempToken(data.tempToken);
+        return;
+      }
+      if (data.requires2FASetup) {
+        setSetupToken(data.setupToken);
         return;
       }
       router.push("/proofread");
@@ -62,6 +68,22 @@ export default function ProofreadLoginPage() {
       setLoading(false);
     }
   };
+
+  if (setupToken) {
+    return (
+      <TwoFactorLoginSetup
+        setupToken={setupToken}
+        onDone={() => {
+          router.push("/proofread");
+          router.refresh();
+        }}
+        onBack={() => {
+          setSetupToken(null);
+          setError(null);
+        }}
+      />
+    );
+  }
 
   if (tempToken) {
     return (

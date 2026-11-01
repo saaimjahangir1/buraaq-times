@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { askClaudeForJSON, AnthropicNotConfiguredError, GeminiBusyError } from "@/lib/anthropic";
 
 // Gives the retries in lib/anthropic.ts enough time on Vercel.
@@ -20,14 +21,20 @@ Do not invent specific source names, publications, or URLs.`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { title, body } = await req.json();
+    // Public and paid per use: limit each visitor, and cap the text sent.
+    const { ok } = await rateLimit(`ai-insights:${clientIp(req)}`, 10, 10 * 60_000);
+    if (!ok) return NextResponse.json({ error: "Too many requests — try again in a few minutes." }, { status: 429 });
+
+    const raw = await req.json();
+    const title = typeof raw?.title === "string" ? raw.title.slice(0, 300) : "";
+    const body = (Array.isArray(raw?.body) ? raw.body.map(String).join("\n\n") : String(raw?.body ?? "")).slice(0, 30_000);
     if (!title || !body) {
       return NextResponse.json({ error: "Missing 'title' or 'body'" }, { status: 400 });
     }
 
     const result = await askClaudeForJSON<InsightsResult>(
       SYSTEM,
-      `Title: ${title}\n\nBody:\n${Array.isArray(body) ? body.join("\n\n") : body}`
+      `Title: ${title}\n\nBody:\n${body}`
     );
 
     return NextResponse.json(result);

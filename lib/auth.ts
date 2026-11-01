@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { prisma } from "./prisma";
 
 export * from "./auth-shared";
 import type { Role, UserStatus } from "./auth-shared";
@@ -26,19 +27,58 @@ export interface SessionPayload {
   email: string;
   role: Role;
   status: UserStatus;
+  /** The account's sessionVersion when signed in; older sign-ins stop working when it changes. */
+  sv?: number;
 }
+
+// The placeholder from .env.example — public, so anyone could forge a sign-in with it.
+const EXAMPLE_SECRET = "change-this-to-a-long-random-string";
+let warnedShortSecret = false;
 
 function secretKey() {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET is not set");
+  if (secret.trim() === EXAMPLE_SECRET) {
+    throw new Error("JWT_SECRET is still the example value from .env.example. Set a random one: openssl rand -base64 48");
+  }
+  if (secret.length < 32 && !warnedShortSecret) {
+    warnedShortSecret = true;
+    console.error("[security] JWT_SECRET is shorter than 32 characters. Replace it with: openssl rand -base64 48");
+  }
   return new TextEncoder().encode(secret);
 }
 
+// Only this algorithm is accepted when checking a token.
+const VERIFY = { algorithms: ["HS256"] };
+
+export const BCRYPT_ROUNDS = 12;
+
 export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 export async function verifyPassword(password: string, hash: string) {
+  return bcrypt.compare(password, hash);
+}
+
+/** True for hashes made with fewer rounds than today's setting (re-hashed at the next sign-in). */
+export function needsRehash(hash: string) {
+  try {
+    return bcrypt.getRounds(hash) < BCRYPT_ROUNDS;
+  } catch {
+    return false;
+  }
+}
+
+// A real hash to compare against when the email isn't found, so a wrong email
+// takes as long as a wrong password (no way to tell which emails have accounts).
+let dummyHash: Promise<string> | null = null;
+export async function verifyPasswordOrDummy(password: string, hash: string | null | undefined) {
+  if (!hash) {
+    dummyHash ??= bcrypt.hash("not-a-real-password", BCRYPT_ROUNDS);
+    await bcrypt.compare(password, await dummyHash);
+    return false;
+  }
   return bcrypt.compare(password, hash);
 }
 
@@ -52,34 +92,61 @@ export async function createSessionToken(payload: SessionPayload, remember: bool
 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey());
+    const { payload } = await jwtVerify(token, secretKey(), VERIFY);
+    // Sign-in tokens for the 2FA step (they carry a "purpose") are never a session.
+    if (payload.purpose !== undefined || typeof payload.sub !== "string") return null;
     return payload as unknown as SessionPayload;
   } catch {
     return null;
   }
 }
 
-/** The signed-in user for one area (the CMS by default, or the proofreading desk). */
+/**
+ * The signed-in user for one area (the CMS by default, or the proofreading desk).
+ * Also checked against the database: the account must still exist, have
+ * two-factor sign-in turned on, and not have been signed out everywhere
+ * (password reset / 2FA reset) since this sign-in.
+ */
 export async function getSession(area: SessionArea = "cms"): Promise<SessionPayload | null> {
   const token = cookies().get(sessionCookieName(area))?.value;
   if (!token) return null;
-  return verifySessionToken(token);
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: { totpEnabled: true, sessionVersion: true },
+  });
+  if (!user || !user.totpEnabled || (user.sessionVersion ?? 0) !== (session.sv ?? 0)) return null;
+  return session;
 }
 
-export async function createPending2FAToken(userId: string, remember: boolean, area: SessionArea = "cms") {
-  return new SignJWT({ purpose: "2fa-pending", sub: userId, remember, area })
+/**
+ * Short-lived tokens for the steps between "password correct" and "signed in":
+ *  - "2fa-pending": enter the code from your authenticator app
+ *  - "2fa-setup":   no authenticator yet — set one up now (required for every account)
+ */
+export type PendingPurpose = "2fa-pending" | "2fa-setup";
+
+export async function createPending2FAToken(
+  userId: string,
+  remember: boolean,
+  area: SessionArea = "cms",
+  purpose: PendingPurpose = "2fa-pending"
+) {
+  return new SignJWT({ purpose, sub: userId, remember, area })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("5m")
+    .setExpirationTime(purpose === "2fa-setup" ? "15m" : "5m")
     .sign(secretKey());
 }
 
 export async function verifyPending2FAToken(
-  token: string
+  token: string,
+  purpose: PendingPurpose = "2fa-pending"
 ): Promise<{ sub: string; remember: boolean; area: SessionArea } | null> {
   try {
-    const { payload } = await jwtVerify(token, secretKey());
-    if (payload.purpose !== "2fa-pending" || typeof payload.sub !== "string") return null;
+    const { payload } = await jwtVerify(token, secretKey(), VERIFY);
+    if (payload.purpose !== purpose || typeof payload.sub !== "string") return null;
     return { sub: payload.sub, remember: Boolean(payload.remember), area: parseArea(payload.area) };
   } catch {
     return null;

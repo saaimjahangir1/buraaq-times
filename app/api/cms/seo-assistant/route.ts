@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { askClaudeForJSON } from "@/lib/anthropic";
 import { aiErrorResponse } from "@/lib/ai-errors";
 import { requireApprovedUser, isNextResponse } from "@/lib/cms-guard";
+import { rateLimit } from "@/lib/rate-limit";
 
 // Gemini can take 10–25 seconds (with retries) on a long draft.
 export const maxDuration = 30;
@@ -55,13 +56,15 @@ All scores are integers. Keep every string field concise.`;
 export async function POST(req: NextRequest) {
   const guard = await requireApprovedUser(req);
   if (isNextResponse(guard)) return guard;
+  const { ok } = await rateLimit(`ai-seo:${guard.id}`, 30, 60 * 60_000);
+  if (!ok) return NextResponse.json({ error: "You've used the AI assistant a lot this hour — try again later." }, { status: 429 });
 
   try {
     const { title, summary, bodyHtml } = await req.json();
     if (!title || !bodyHtml) {
       return NextResponse.json({ error: "Missing 'title' or 'bodyHtml'" }, { status: 400 });
     }
-    const plainText = String(bodyHtml).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const plainText = String(bodyHtml).slice(0, 300_000).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 40_000);
 
     const result = await askClaudeForJSON<SeoResult>(
       SYSTEM,

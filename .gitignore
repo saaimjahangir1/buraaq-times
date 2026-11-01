@@ -11,6 +11,19 @@ out/
 .env*.local
 .env.development
 .env.production
+.env.*
+!.env.example
+
+# keys and credential files (e.g. a Google service-account JSON) — never commit
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+*serviceaccount*.json
+*-key.json
+*secret*.json
 
 # local sqlite database — contains real user data (emails, password hashes)
 *.db

@@ -5,6 +5,7 @@ import { generateToken, tokenExpiry } from "@/lib/tokens";
 import { sendMail } from "@/lib/mailer";
 import { SITE_URL } from "@/lib/seo";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/proofread-policy";
 
 const schema = z.object({ email: z.string().email() });
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { sent } = await sendMail({
       to: user.email,
       subject: "Reset your Buraaq Times CMS password",
-      html: `<p>Hi ${user.name},</p><p>Reset your password here (expires in 1 hour):</p><p><a href="${link}">${link}</a></p><p>If you didn't request this, you can ignore this email.</p>`,
+      html: `<p>Hi ${escapeHtml(user.name)},</p><p>Reset your password here (expires in 1 hour):</p><p><a href="${link}">${link}</a></p><p>If you didn't request this, you can ignore this email.</p>`,
     });
     if (!sent && process.env.NODE_ENV !== "production") devLink = link;
   }

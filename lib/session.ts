@@ -4,7 +4,7 @@ import { createSessionToken, sessionCookieName, Role, SessionArea, UserStatus } 
 import { clearCsrfCookie, generateCsrfToken, setCsrfCookie } from "./csrf";
 
 export async function issueSession(
-  user: { id: string; name: string; email: string; role: string; status: string },
+  user: { id: string; name: string; email: string; role: string; status: string; sessionVersion?: number | null },
   remember: boolean,
   body: Record<string, unknown> = {},
   area: SessionArea = "cms"
@@ -16,6 +16,7 @@ export async function issueSession(
       email: user.email,
       role: user.role as Role,
       status: user.status as UserStatus,
+      sv: user.sessionVersion ?? 0,
     },
     remember
   );

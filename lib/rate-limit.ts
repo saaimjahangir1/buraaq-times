@@ -67,7 +67,20 @@ export async function rateLimit(
   return memoryLimit(key, limit, windowMs);
 }
 
+/**
+ * The visitor's IP address, for rate limits. The FIRST address in
+ * X-Forwarded-For is whatever the visitor typed into that header, so it can't
+ * be trusted; the LAST one is added by our own proxy (nginx on the VPS, or
+ * Vercel). On Vercel, x-real-ip is set by Vercel itself.
+ */
 export function clientIp(req: Request): string {
-  const fwd = req.headers.get("x-forwarded-for");
-  return fwd?.split(",")[0]?.trim() || "unknown";
+  if (process.env.VERCEL) {
+    const real = req.headers.get("x-real-ip")?.trim();
+    if (real) return real;
+  }
+  const parts = (req.headers.get("x-forwarded-for") || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts[parts.length - 1] || "unknown";
 }

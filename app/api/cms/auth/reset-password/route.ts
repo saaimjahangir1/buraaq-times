@@ -6,7 +6,7 @@ import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const schema = z.object({
   token: z.string().min(1),
-  password: z.string().min(8),
+  password: z.string().min(8).max(200),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
   const passwordHash = await hashPassword(parsed.data.password);
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash, passwordResetToken: null, passwordResetExpires: null },
+    // New password → every existing sign-in (on any device) stops working.
+    data: { passwordHash, passwordResetToken: null, passwordResetExpires: null, sessionVersion: { increment: 1 } },
   });
 
   return NextResponse.json({ ok: true });

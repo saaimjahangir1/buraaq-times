@@ -9,7 +9,7 @@ import { notifyAdminsOfRequest } from "@/lib/proofread";
 const schema = z.object({
   name: z.string().min(2).max(80),
   email: z.string().email(),
-  password: z.string().min(8),
+  password: z.string().min(8).max(200),
   bio: z.string().max(500).optional(),
   role: z.enum(["NEWS_EDITOR", "ARTICLE_EDITOR"]),
   // Optional: also ask to proofread with the same account.

@@ -49,9 +49,20 @@ model User {
   passwordResetToken   String?   @unique
   passwordResetExpires DateTime?
 
-  // Two-factor authentication (TOTP, RFC 6238) — user-enabled, optional.
-  totpSecret  String?
-  totpEnabled Boolean @default(false)
+  // Two-factor authentication (TOTP, RFC 6238) — required for every account:
+  // anyone without it sets it up at their next sign-in.
+  totpSecret        String?
+  totpEnabled       Boolean @default(false)
+  // A new authenticator being set up (e.g. moving to a new phone). It only
+  // replaces totpSecret once a code from it is confirmed.
+  totpPendingSecret String?
+  // Last accepted code's time step, so the same code can't be used twice.
+  totpLastStep      Int?
+  // Wrong codes in a row; 5 → codes are refused for 5 minutes (totpLockedUntil).
+  totpFailures      Int       @default(0)
+  totpLockedUntil   DateTime?
+  // Bumped on password reset / 2FA reset: every older sign-in stops working.
+  sessionVersion    Int     @default(0)
 
   posts         Post[]
   media         Media[]

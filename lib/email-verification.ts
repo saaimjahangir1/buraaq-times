@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import { generateToken, tokenExpiry } from "./tokens";
 import { sendMail } from "./mailer";
 import { SITE_URL } from "./seo";
+import { escapeHtml } from "./proofread-policy";
 
 export async function sendVerificationEmail(
   user: { id: string; name: string; email: string; role?: string },
@@ -25,7 +26,7 @@ export async function sendVerificationEmail(
     subject: isProofreader
       ? "Verify your Buraaq Times proofreader account"
       : "Verify your Buraaq Times CMS account",
-    html: `<p>Hi ${user.name},</p><p>Confirm your email to finish setting up your CMS account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
+    html: `<p>Hi ${escapeHtml(user.name)},</p><p>Confirm your email to finish setting up your CMS account:</p><p><a href="${link}">${link}</a></p><p>This link expires in 24 hours.</p>`,
   });
 
   // In dev without SMTP configured, hand the link back directly so the

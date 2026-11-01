@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, ShieldAlert, PenLine, SpellCheck, Mail, MailWarning } from "lucide-react";
+import { Check, X, ShieldAlert, ShieldCheck, PenLine, SpellCheck, Mail, MailWarning, RotateCcw } from "lucide-react";
 import { cmsFetch } from "@/lib/cms-fetch";
 import Select from "@/components/Select";
 import { writerState, proofreaderState, AccessState } from "@/lib/auth-shared";
@@ -17,12 +17,13 @@ interface UserRow {
   status: Status;
   proofreaderStatus: Status | null;
   emailVerified: boolean;
+  totpEnabled: boolean;
   bio: string | null;
   createdAt: string;
   _count: { posts: number };
 }
 
-type Patch = Partial<{ role: Role; status: Status; proofreaderStatus: Status | null; emailVerified: true }>;
+type Patch = Partial<{ role: Role; status: Status; proofreaderStatus: Status | null; emailVerified: true; reset2fa: true }>;
 
 function StateChip({ state }: { state: AccessState }) {
   const map = {
@@ -142,6 +143,33 @@ export default function CmsUsersPage() {
                     </Btn>
                   </div>
                 )}
+                <div className="flex items-center gap-2">
+                  {u.totpEnabled ? (
+                    <>
+                      <span className="flex items-center gap-1 rounded-full bg-signal/15 px-2 py-1 text-[10px] font-semibold uppercase text-signal">
+                        <ShieldCheck size={12} /> 2FA on
+                      </span>
+                      <Btn
+                        tone="plain"
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Reset two-factor sign-in for ${u.name}? Use this only if they lost their phone. They'll be signed out everywhere and set up a new authenticator at their next sign-in.`
+                            )
+                          ) {
+                            update(u.id, { reset2fa: true });
+                          }
+                        }}
+                      >
+                        <RotateCcw size={13} /> Reset 2FA
+                      </Btn>
+                    </>
+                  ) : (
+                    <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase text-white/40">
+                      2FA set up at next sign-in
+                    </span>
+                  )}
+                </div>
                 {u._count.posts > 0 && <span className="text-xs text-white/30">{u._count.posts} posts</span>}
               </div>
 

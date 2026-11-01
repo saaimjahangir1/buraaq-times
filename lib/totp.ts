@@ -55,13 +55,22 @@ function hotp(secretBuf: Buffer, counter: number): string {
   return String(code % 1_000_000).padStart(6, "0");
 }
 
-/** Verifies a 6-digit code, allowing ±1 time step (30s) for clock drift. */
-export function verifyTotp(secret: string, token: string, window = 1): boolean {
-  if (!/^\d{6}$/.test(token)) return false;
+/**
+ * The time step a 6-digit code belongs to (±1 step of 30s for clock drift),
+ * or null if it's wrong. Callers store the step so a code can't be reused.
+ */
+export function totpStep(secret: string, token: string, window = 1): number | null {
+  if (!/^\d{6}$/.test(token)) return null;
   const secretBuf = base32Decode(secret);
   const counter = Math.floor(Date.now() / 1000 / 30);
+  const given = Buffer.from(token);
   for (let i = -window; i <= window; i++) {
-    if (hotp(secretBuf, counter + i) === token) return true;
+    if (crypto.timingSafeEqual(Buffer.from(hotp(secretBuf, counter + i)), given)) return counter + i;
   }
-  return false;
+  return null;
+}
+
+/** Verifies a 6-digit code, allowing ±1 time step (30s) for clock drift. */
+export function verifyTotp(secret: string, token: string, window = 1): boolean {
+  return totpStep(secret, token, window) !== null;
 }

@@ -89,7 +89,7 @@ export default function CmsMediaPage() {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
           className="hidden"
           onChange={(e) => e.target.files && upload(e.target.files)}

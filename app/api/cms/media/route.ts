@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedUser, requireProofreader, isNextResponse } from "@/lib/cms-guard";
 import { smartCropTo16x9, shouldSkipCropping } from "@/lib/image-processing";
 import { uploadToBlob } from "@/lib/blob-storage";
-
-const MAX_SIZE = 8 * 1024 * 1024;
-const ALLOWED = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
+import { checkImageUpload, MAX_IMAGE_BYTES } from "@/lib/upload-check";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   // The proofreading desk sees the whole library, so a proofreader can pick
@@ -29,27 +27,30 @@ export async function POST(req: NextRequest) {
   const guard = await requireApprovedUser(req, { allowProofreader: true });
   if (isNextResponse(guard)) return guard;
 
-  const form = await req.formData();
-  const file = form.get("file");
-  const altText = (form.get("altText") as string) || "";
-  const crop = form.get("crop") === "true";
+  const { ok } = await rateLimit(`upload:${guard.id}`, 60, 60 * 60_000);
+  if (!ok) return NextResponse.json({ error: "Too many uploads — try again later." }, { status: 429 });
+
+  const form = await req.formData().catch(() => null);
+  const file = form?.get("file");
+  const altText = String(form?.get("altText") ?? "").slice(0, 300);
+  const crop = form?.get("crop") === "true";
 
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
-  if (!ALLOWED.includes(file.type)) {
-    return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
-  }
-  if (file.size > MAX_SIZE) {
+  if (file.size > MAX_IMAGE_BYTES) {
     return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
   }
 
   let bytes: Buffer = Buffer.from(await file.arrayBuffer());
-  let mimeType = file.type;
-  let ext = path.extname(file.name) || "";
+  // The type comes from the file itself, not from the browser or the file name.
+  const check = await checkImageUpload(bytes);
+  if (!check.ok) return NextResponse.json({ error: check.error }, { status: 400 });
+  let mimeType: string = check.mime;
+  let ext = check.ext;
   let originalUrl: string | null = null;
 
-  if (crop && !shouldSkipCropping(file.type)) {
+  if (crop && !shouldSkipCropping(mimeType)) {
     try {
       const originalFilename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-original${ext}`;
       originalUrl = await uploadToBlob(bytes, originalFilename, mimeType);
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     data: {
       url,
       originalUrl,
-      filename: file.name,
+      filename: file.name.replace(/[\u0000-\u001f<>"\\/]/g, "").slice(0, 200) || "image",
       mimeType,
       size: bytes.length,
       altText,
