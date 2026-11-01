@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X, Upload, Loader2 } from "lucide-react";
 import { cmsFetch } from "@/lib/cms-fetch";
@@ -30,17 +30,17 @@ export default function MediaPicker({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch(libraryUrl);
     const data = await res.json().catch(() => ({}));
     setItems(data.media ?? []);
     setLoading(false);
-  };
+  }, [libraryUrl]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   const upload = async (file: File) => {
     setUploading(true);

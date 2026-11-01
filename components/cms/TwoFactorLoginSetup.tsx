@@ -88,7 +88,7 @@ export default function TwoFactorLoginSetup({
         )}
         {secret && (
           <p className="mt-3 w-full break-all rounded-lg bg-white/5 p-2 text-center font-mono text-xs text-white/50">
-            Can't scan? Enter this key: {secret}
+            Can&apos;t scan? Enter this key: {secret}
           </p>
         )}
       </div>
