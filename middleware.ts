@@ -36,8 +36,23 @@ function allowedHosts(req: NextRequest) {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+// Largest request body each API accepts. Oversized requests are refused before
+// any code reads them (protects against memory-exhaustion attacks, e.g. the
+// open zod issue, until the Next.js 16 / zod 4 upgrade).
+const MB = 1024 * 1024;
+function maxBodyBytes(pathname: string) {
+  if (pathname.startsWith("/api/cms/media")) return 10 * MB; // image uploads (max 8MB file)
+  if (pathname.startsWith("/api/resume/save")) return 3 * MB; // resume PDF (max 2MB)
+  return 2 * MB; // everything else is JSON: articles, comments, settings…
+}
+
 export function middleware(req: NextRequest) {
   if (SAFE_METHODS.has(req.method)) return NextResponse.next();
+
+  const length = Number(req.headers.get("content-length") || 0);
+  if (length > maxBodyBytes(req.nextUrl.pathname)) {
+    return NextResponse.json({ error: "Request too large" }, { status: 413 });
+  }
 
   const origin = req.headers.get("origin");
   if (origin) {

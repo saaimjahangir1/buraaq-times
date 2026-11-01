@@ -46,6 +46,12 @@ const nextConfig = {
     },
   },
   images: {
+    // Next.js's built-in image optimizer (/_next/image) is switched off: Next 14
+    // has critical security holes in it (remote code execution and denial of
+    // service) that are only fixed in Next 16. Images are still shown normally —
+    // uploads are already resized/cropped by the site itself when uploaded.
+    // Turn this back on after the Next.js 16 upgrade.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
