@@ -17,13 +17,16 @@ import {
   type ResumeInput,
 } from "@/lib/resume/resume";
 import ResumePreview from "./ResumePreview";
+import TemplatePicker from "./TemplatePicker";
 import ResumeEditor from "./ResumeEditor";
+import { DEFAULT_TEMPLATE, getTemplate, SAMPLE_RESUME, TEMPLATES, type TemplateId } from "./templates";
 
 /* ------------------------------------------------------------------ */
 /* Config                                                              */
 /* ------------------------------------------------------------------ */
 
 const DRAFT_KEY = "bt_resume_draft_v1";
+const TEMPLATE_KEY = "bt_resume_template";
 
 const STEPS = ["About you", "Experience", "Education & projects", "Skills & target job"] as const;
 
@@ -135,6 +138,16 @@ export default function ResumeBuilder() {
   const [usedAi, setUsedAi] = useState(false);
   const [editing, setEditing] = useState(false);
   const [accent, setAccent] = useState<string>(ACCENTS[0].value);
+  const [template, setTemplateState] = useState<TemplateId>(DEFAULT_TEMPLATE);
+  const setTemplate = (id: TemplateId) => {
+    setTemplateState(id);
+    try {
+      localStorage.setItem(TEMPLATE_KEY, id);
+    } catch {
+      /* storage blocked: the choice just isn't remembered */
+    }
+  };
+  const design = getTemplate(template);
 
   const [generating, setGenerating] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -148,10 +161,10 @@ export default function ResumeBuilder() {
   const savedRef = useRef<{ id: string; key: string } | null>(null);
   const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
-  const saveCopy = (data: ResumeData, colour: string, pdfBlob?: Blob) => {
+  const saveCopy = (data: ResumeData, colour: string, tpl: TemplateId, pdfBlob?: Blob) => {
     saveQueue.current = saveQueue.current.then(async () => {
       try {
-        const blob = pdfBlob ?? (await (await import("./ResumePDF")).renderResumePdf(data, colour));
+        const blob = pdfBlob ?? (await (await import("./ResumePDF")).renderResumePdf(data, colour, tpl));
         const send = (method: "POST" | "PUT") => {
           const form = new FormData();
           form.append("pdf", blob, "resume.pdf");
@@ -192,6 +205,12 @@ export default function ResumeBuilder() {
       }
     } catch {
       /* corrupt or blocked storage: start fresh */
+    }
+    try {
+      const saved = localStorage.getItem(TEMPLATE_KEY);
+      if (saved && TEMPLATES.some((t) => t.id === saved)) setTemplateState(saved as TemplateId);
+    } catch {
+      /* ignore */
     }
     setHydrated(true);
   }, []);
@@ -246,7 +265,7 @@ export default function ResumeBuilder() {
     setEditing(false);
     setError(null);
     scrollToTop();
-    saveCopy(data, accent);
+    saveCopy(data, accent, template);
   };
 
   const buildPlain = () => {
@@ -294,8 +313,8 @@ export default function ResumeBuilder() {
     setError(null);
     try {
       const { renderResumePdf } = await import("./ResumePDF");
-      const blob = await renderResumePdf(resume, accent);
-      saveCopy(resume, accent, blob);
+      const blob = await renderResumePdf(resume, accent, template);
+      saveCopy(resume, accent, template, blob);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -347,6 +366,12 @@ export default function ResumeBuilder() {
           </div>
         </div>
 
+        <div className="space-y-3">
+          <p className="text-sm font-semibold">Design</p>
+          <TemplatePicker value={template} onChange={setTemplate} data={resume} accent={accent} />
+        </div>
+
+        {design.usesAccent ? (
         <div className="flex flex-wrap items-center gap-3" role="radiogroup" aria-label="Resume colour">
           <span className="text-sm font-semibold">Colour</span>
           {ACCENTS.map((a) => (
@@ -365,6 +390,9 @@ export default function ResumeBuilder() {
             />
           ))}
         </div>
+        ) : (
+          <p className="text-xs opacity-60">The {design.name} design is black and white, so it has no colour choice.</p>
+        )}
 
         {error ? (
           <p role="alert" className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-400">
@@ -379,7 +407,7 @@ export default function ResumeBuilder() {
             </div>
           ) : null}
           <div className="overflow-x-auto">
-            <ResumePreview data={resume} accent={accent} />
+            <ResumePreview data={resume} accent={accent} template={template} />
           </div>
         </div>
       </div>
@@ -737,6 +765,12 @@ export default function ResumeBuilder() {
               maxLength={LIMITS.jobDescription}
             />
           </Field>
+          <div className="space-y-3 sm:col-span-2">
+            <p className="text-sm font-semibold">
+              Choose a design <span className="font-normal opacity-60">you can switch any time after it&apos;s written</span>
+            </p>
+            <TemplatePicker value={template} onChange={setTemplate} data={SAMPLE_RESUME} accent={accent} />
+          </div>
         </div>
       )}
 

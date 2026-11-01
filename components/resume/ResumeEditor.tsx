@@ -49,6 +49,10 @@ export default function ResumeEditor({
 
   return (
     <div className="space-y-5">
+      <p className="rounded-lg bg-neutral-500/10 px-3 py-2 text-xs leading-relaxed opacity-80">
+        Tip: put <strong>**double stars**</strong> around words to make them <strong>bold</strong> in your resume, e.g.{" "}
+        <code className="font-mono">Managed the **NOC** team</code>.
+      </p>
       <label className="block">
         <Label>Headline</Label>
         <input className={fieldClass} value={value.headline} onChange={(e) => patch({ headline: e.target.value })} />

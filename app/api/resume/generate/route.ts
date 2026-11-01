@@ -70,6 +70,7 @@ Hard rules:
 - Use ONLY facts present in the candidate data. Never invent employers, job titles, dates, degrees, grades, tools, numbers, percentages, team sizes, clients or achievements. If the notes are thin, write fewer and plainer bullets instead of padding.
 - Keep any numbers exactly as the candidate wrote them.
 - Bullets: start with a strong action verb (past tense; present tense only for a current role), one line each, ideally under 22 words, no first person, no trailing full stop. 2–5 bullets per job, 1–3 per project.
+- In bullets you may make ONE key phrase bold (a tool, system or result the candidate named) by wrapping it in double asterisks, e.g. "Managed the **Network Operations Center** shift rota". At most one per bullet, never a whole bullet, and not in the summary, headline or skills.
 - Summary: 2–3 sentences, no "I", no clichés like "results-driven" or "passionate", grounded in the candidate's actual experience.
 - Headline: a short professional title based on the target role (or their most recent role if none given).
 - Skills: group ONLY the skills the candidate listed or clearly named in their notes into 2–4 sensible categories.

@@ -147,7 +147,8 @@ function block(v: unknown, max: number): string {
   return typeof v === "string" ? v.replace(/\r\n?/g, "\n").trim().slice(0, max) : "";
 }
 
-const BULLET_PREFIX = /^[\s\-–—•*·▪●◦>]+/;
+// Bullet markers people paste in ("- ", "• ", "* "); a leading "**" is kept — it's bold text.
+const BULLET_PREFIX = /^(?:[\s\-–—•·▪●◦>]|\*(?!\*))+/;
 
 function capitalise(s: string): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;

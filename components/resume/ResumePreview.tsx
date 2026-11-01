@@ -1,175 +1,138 @@
-import type { ReactNode } from "react";
-import { linkParts, tidy, type ResumeData } from "@/lib/resume/resume";
+"use client";
 
-// A white "sheet of paper" that mirrors the PDF layout, so what users see is what they download.
-// Always light, regardless of the site's theme, because the PDF is.
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties } from "react";
+import type { ResumeData } from "@/lib/resume/resume";
+import { getTemplate, type Prims, type Style } from "./templates";
 
-function Section({ title, accent, children }: { title: string; accent: string; children: ReactNode }) {
-  return (
-    <section className="mt-6">
-      <h3
-        className="mb-2.5 border-b-[1.5px] pb-1 text-[0.9rem] font-bold"
-        style={{ color: accent, borderColor: accent }}
-      >
-        {title}
-      </h3>
+// The resume as a white A4 sheet on screen. It draws the very same template
+// as the PDF (see templates.tsx), with HTML instead of PDF building blocks,
+// so what people see is what they download. Always light, like the PDF.
+
+const PAGE_W_PT = 595.28;
+const PAGE_H_PT = 841.89;
+const PT_TO_PX = 96 / 72;
+const PAGE_W_PX = PAGE_W_PT * PT_TO_PX;
+
+// Numbers are PDF points; these style keys are plain numbers in CSS too.
+const UNITLESS = new Set(["lineHeight", "flex", "flexGrow", "flexShrink", "opacity", "zIndex", "fontWeight"]);
+
+const FONTS: Record<string, CSSProperties> = {
+  Helvetica: { fontFamily: "Helvetica, Arial, sans-serif" },
+  "Helvetica-Bold": { fontFamily: "Helvetica, Arial, sans-serif", fontWeight: 700 },
+  "Helvetica-Oblique": { fontFamily: "Helvetica, Arial, sans-serif", fontStyle: "italic" },
+  "Times-Roman": { fontFamily: "'Times New Roman', Times, serif" },
+  "Times-Bold": { fontFamily: "'Times New Roman', Times, serif", fontWeight: 700 },
+  "Times-Italic": { fontFamily: "'Times New Roman', Times, serif", fontStyle: "italic" },
+};
+
+function css(style: Style | undefined, base: CSSProperties = {}): CSSProperties {
+  const out: Record<string, unknown> = { ...base };
+  if (!style) return out as CSSProperties;
+  for (const [key, value] of Object.entries(style)) {
+    if (key === "fontFamily") {
+      Object.assign(out, FONTS[String(value)] ?? { fontFamily: String(value) });
+    } else if (key === "paddingVertical" || key === "paddingHorizontal" || key === "marginVertical" || key === "marginHorizontal") {
+      const v = typeof value === "number" ? `${value}pt` : value;
+      const [kind, axis] = key.startsWith("padding") ? ["padding", key.slice(7)] : ["margin", key.slice(6)];
+      const sides = axis === "Vertical" ? ["Top", "Bottom"] : ["Left", "Right"];
+      for (const s of sides) out[`${kind}${s}`] = v;
+    } else {
+      out[key] = typeof value === "number" && !UNITLESS.has(key) ? `${value}pt` : value;
+    }
+  }
+  // react-pdf borders are solid by default; CSS needs it said.
+  for (const side of ["", "Top", "Bottom", "Left", "Right"]) {
+    if (out[`border${side}Width`] !== undefined && out[`border${side}Style`] === undefined) out[`border${side}Style`] = "solid";
+  }
+  return out as CSSProperties;
+}
+
+// Inside a Txt, a Txt is an inline span (as in react-pdf).
+const InText = createContext(false);
+
+const htmlPrims: Prims = {
+  Page: ({ style, children }) => (
+    // pre-wrap: keep spaces exactly as the PDF does (e.g. "   |   " between contact details).
+    <div style={css(style, { width: `${PAGE_W_PT}pt`, minHeight: `${PAGE_H_PT}pt`, background: "#ffffff", boxSizing: "border-box", display: "flex", flexDirection: "column", textAlign: "left", overflowWrap: "break-word" })}>
       {children}
-    </section>
-  );
-}
-
-function Bullets({ items }: { items: string[] }) {
-  const clean = tidy(items);
-  if (!clean.length) return null;
-  return (
-    <ul className="mt-1 list-disc space-y-0.5 pl-4 marker:text-zinc-500">
-      {clean.map((b, i) => (
-        <li key={i}>{b}</li>
-      ))}
-    </ul>
-  );
-}
-
-function EntryHead({ title, right, sub }: { title: string; right?: ReactNode; sub?: string }) {
-  return (
-    <>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-        <p className="font-bold text-zinc-900">{title}</p>
-        {right ? <p className="text-[0.8rem] text-zinc-600">{right}</p> : null}
-      </div>
-      {sub ? <p className="text-[0.85rem] text-zinc-600">{sub}</p> : null}
-    </>
-  );
-}
-
-export default function ResumePreview({ data, accent }: { data: ResumeData; accent: string }) {
-  const { contact } = data;
-  const contactBits: ReactNode[] = [];
-  if (contact.email) contactBits.push(<a href={`mailto:${contact.email}`}>{contact.email}</a>);
-  if (contact.phone) contactBits.push(contact.phone);
-  if (contact.location) contactBits.push(contact.location);
-  contact.links.forEach((l) => {
-    const { href, label } = linkParts(l);
-    contactBits.push(
-      <a href={href} target="_blank" rel="noopener noreferrer">
-        {label}
-      </a>
+    </div>
+  ),
+  // react-pdf Views are flex columns that don't shrink; match that.
+  Box: ({ style, children }) => <div style={css(style, { display: "flex", flexDirection: "column", flexShrink: 0, boxSizing: "border-box" })}>{children}</div>,
+  Txt: function Txt({ style, children }) {
+    const inside = useContext(InText);
+    return inside ? (
+      <span style={css(style)}>{children}</span>
+    ) : (
+      <InText.Provider value={true}>
+        <div style={css(style, { display: "block", boxSizing: "border-box", minWidth: 0, whiteSpace: "pre-wrap" })}>{children}</div>
+      </InText.Provider>
     );
-  });
+  },
+  Lnk: ({ src, style, children }) => (
+    <a href={src} target="_blank" rel="noopener noreferrer" style={css(style, { color: "inherit" })}>
+      {children}
+    </a>
+  ),
+};
 
-  const skills = data.skills.filter((g) => g.items.length);
+/** The A4 sheet at its real size (595 × 842 pt). */
+export function ResumeSheet({ data, accent, template }: { data: ResumeData; accent: string; template?: string }) {
+  return getTemplate(template).render(data, accent, htmlPrims);
+}
+
+/** The sheet shrunk to fit its container (phones, side panels, thumbnails). */
+export function ScaledSheet({
+  data,
+  accent,
+  template,
+  maxHeight,
+  className = "",
+}: {
+  data: ResumeData;
+  accent: string;
+  template?: string;
+  /** Crop to this many pixels (thumbnails); omit to show the whole resume. */
+  maxHeight?: number;
+  className?: string;
+}) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const measure = () => {
+      if (!outer.current || !inner.current) return;
+      const s = Math.min(1, outer.current.clientWidth / PAGE_W_PX);
+      setScale(s);
+      setHeight(inner.current.offsetHeight * s);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (outer.current) ro.observe(outer.current);
+    if (inner.current) ro.observe(inner.current);
+    return () => ro.disconnect();
+  }, []);
 
   return (
-    <article
-      aria-label="Resume preview"
-      className="mx-auto w-full max-w-[820px] rounded-sm bg-white px-6 py-8 text-[0.9rem] leading-relaxed text-zinc-800 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)] sm:px-12 sm:py-12"
-      style={{ fontFamily: "Helvetica, Arial, sans-serif" }}
+    <div
+      ref={outer}
+      className={className}
+      // Inline (not utility classes) so the sheet is always clipped to this box.
+      style={{ position: "relative", width: "100%", overflow: "hidden", height: maxHeight ? Math.min(maxHeight, height ?? maxHeight) : height ?? undefined }}
     >
-      <header>
-        <h2 className="text-[1.9rem] font-bold leading-tight text-zinc-900">{data.name || "Your name"}</h2>
-        {data.headline ? (
-          <p className="mt-1 text-[1.02rem]" style={{ color: accent }}>
-            {data.headline}
-          </p>
-        ) : null}
-        {contactBits.length ? (
-          <p className="mt-2 flex flex-wrap gap-x-2 text-[0.8rem] text-zinc-600">
-            {contactBits.map((bit, i) => (
-              <span key={i} className="flex gap-x-2">
-                {i > 0 ? <span aria-hidden="true" className="text-zinc-400">|</span> : null}
-                {bit}
-              </span>
-            ))}
-          </p>
-        ) : null}
-      </header>
+      <div ref={inner} style={{ width: PAGE_W_PX, transform: `scale(${scale})`, transformOrigin: "top left", position: "absolute", top: 0, left: 0 }}>
+        <ResumeSheet data={data} accent={accent} template={template} />
+      </div>
+    </div>
+  );
+}
 
-      {data.summary.trim() ? (
-        <Section title="Profile" accent={accent}>
-          <p>{data.summary}</p>
-        </Section>
-      ) : null}
-
-      {data.experience.length ? (
-        <Section title="Experience" accent={accent}>
-          <div className="space-y-3.5">
-            {data.experience.map((e, i) => (
-              <div key={i}>
-                <EntryHead
-                  title={e.role || e.company}
-                  right={e.dates}
-                  sub={e.role ? [e.company, e.location].filter(Boolean).join(", ") : undefined}
-                />
-                <Bullets items={e.bullets} />
-              </div>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {data.education.length ? (
-        <Section title="Education" accent={accent}>
-          <div className="space-y-3.5">
-            {data.education.map((e, i) => (
-              <div key={i}>
-                <EntryHead
-                  title={e.degree || e.institution}
-                  right={e.dates}
-                  sub={e.degree ? [e.institution, e.location].filter(Boolean).join(", ") : undefined}
-                />
-                <Bullets items={e.details} />
-              </div>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {data.projects.length ? (
-        <Section title="Projects" accent={accent}>
-          <div className="space-y-3.5">
-            {data.projects.map((p, i) => (
-              <div key={i}>
-                <EntryHead
-                  title={p.name}
-                  right={
-                    p.link ? (
-                      <a href={linkParts(p.link).href} target="_blank" rel="noopener noreferrer">
-                        {linkParts(p.link).label}
-                      </a>
-                    ) : undefined
-                  }
-                />
-                <Bullets items={p.bullets} />
-              </div>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {skills.length ? (
-        <Section title="Skills" accent={accent}>
-          <div className="space-y-1">
-            {skills.map((g, i) => (
-              <p key={i}>
-                {g.category ? <strong className="text-zinc-900">{g.category}: </strong> : null}
-                {g.items.join(", ")}
-              </p>
-            ))}
-          </div>
-        </Section>
-      ) : null}
-
-      {tidy(data.certifications).length ? (
-        <Section title="Certifications" accent={accent}>
-          <Bullets items={data.certifications} />
-        </Section>
-      ) : null}
-
-      {data.languages.length ? (
-        <Section title="Languages" accent={accent}>
-          <p>{data.languages.join(", ")}</p>
-        </Section>
-      ) : null}
+export default function ResumePreview({ data, accent, template }: { data: ResumeData; accent: string; template?: string }) {
+  return (
+    <article aria-label="Resume preview" className="mx-auto w-full max-w-[794px] text-black shadow-[0_24px_60px_-20px_rgba(0,0,0,0.45)]">
+      <ScaledSheet data={data} accent={accent} template={template} />
     </article>
   );
 }
