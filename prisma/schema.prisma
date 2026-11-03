@@ -179,6 +179,36 @@ model Comment {
   // moderators rather than silently auto-deleting anything.
   spamScore  Int     @default(0)
   spamReason String?
+
+  // Conversation: replies hang off a top-level comment (one level, like most
+  // news sites); replyToName is who a reply answers, shown as "@Name".
+  parentId    String?
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+  replyToName String?
+
+  likeCount    Int @default(0)
+  dislikeCount Int @default(0)
+  // Readers' "Report" clicks; 3 reports hide the comment until a moderator looks.
+  reportCount  Int @default(0)
+
+  reactions CommentReaction[]
+
+  @@index([postId, status])
+  @@index([parentId])
+}
+
+// One row per (comment, anonymous visitor, reaction) — like PostReaction:
+// keeps likes, dislikes and reports to one per visitor, no login needed.
+model CommentReaction {
+  id        String   @id @default(cuid())
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  visitorId String
+  type      String // "LIKE" | "DISLIKE" | "REPORT"
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, visitorId, type])
 }
 
 // One row per (post, anonymous visitor, reaction type) — the unique

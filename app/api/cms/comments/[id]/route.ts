@@ -20,7 +20,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const updated = await prisma.comment.update({
     where: { id: params.id },
-    data: { status: parsed.data.status },
+    // Approving (again) after reader reports clears the report count, so the
+    // comment isn't hidden by the next single report.
+    data: parsed.data.status === "APPROVED" ? { status: "APPROVED", reportCount: 0 } : { status: parsed.data.status },
   });
   return NextResponse.json({ comment: updated });
 }

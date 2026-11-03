@@ -19,7 +19,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
   const [sameType, comments] = await Promise.all([
     getPublishedPosts("article"),
-    getApprovedComments(params.slug, "article"),
+    getApprovedComments(params.slug, "article", getVisitorId()),
   ]);
 
   const pool = sameType.filter((p) => p.slug !== post.slug);

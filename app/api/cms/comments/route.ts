@@ -9,7 +9,8 @@ export async function GET() {
   const comments = await prisma.comment.findMany({
     where: guard.role === "ADMIN" ? {} : { post: { authorId: guard.id } },
     orderBy: { createdAt: "desc" },
-    include: { post: { select: { title: true, slug: true, type: true } } },
+    include: { post: { select: { title: true, slug: true, type: true } }, parent: { select: { authorName: true, body: true } } },
     take: 200,
   });
-  return NextResponse.json({ comments });}
+  return NextResponse.json({ comments });
+}

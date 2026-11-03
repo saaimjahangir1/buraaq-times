@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "./prisma";
-import { Post, ContentType } from "./types";
+import { Post, ContentType, CommentView } from "./types";
 import { htmlToParagraphs, formatViews, formatDate } from "./content-format";
 import { roleLabel, Role } from "./auth";
 
@@ -113,19 +113,42 @@ export async function getPublicPost(type: ContentType, slug: string): Promise<Po
   return row ? toPublicPost(row) : null;
 }
 
-export async function getApprovedComments(slug: string, type: ContentType) {
+/**
+ * Approved comments as threads: top-level comments (newest first), each with
+ * its approved replies (oldest first, like a conversation). `visitorId` marks
+ * which ones this visitor liked or disliked.
+ */
+export async function getApprovedComments(slug: string, type: ContentType, visitorId?: string | null): Promise<CommentView[]> {
   const post = await prisma.post.findFirst({ where: { slug, type }, select: { id: true } });
   if (!post) return [];
-  const comments = await prisma.comment.findMany({
+  const rows = await prisma.comment.findMany({
     where: { postId: post.id, status: "APPROVED" },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, authorName: true, body: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, authorName: true, body: true, createdAt: true, parentId: true, replyToName: true, likeCount: true, dislikeCount: true },
+    take: 1000,
   });
-  return comments.map((c: { id: string; authorName: string; body: string }) => ({
+  const votes = visitorId
+    ? await prisma.commentReaction.findMany({
+        where: { visitorId, type: { in: ["LIKE", "DISLIKE"] }, commentId: { in: rows.map((r) => r.id) } },
+        select: { commentId: true, type: true },
+      })
+    : [];
+  const myVote = new Map(votes.map((v) => [v.commentId, v.type as "LIKE" | "DISLIKE"]));
+  const view = (c: (typeof rows)[number]): CommentView => ({
     id: c.id,
     name: c.authorName,
     text: c.body,
-  }));
+    createdAt: c.createdAt.toISOString(),
+    likes: c.likeCount,
+    dislikes: c.dislikeCount,
+    myVote: myVote.get(c.id) ?? null,
+    replyToName: c.replyToName,
+    replies: [],
+  });
+  const top = new Map<string, CommentView>();
+  for (const c of rows) if (!c.parentId) top.set(c.id, view(c));
+  for (const c of rows) if (c.parentId) top.get(c.parentId)?.replies.push(view(c)); // replies to hidden comments stay hidden
+  return [...top.values()].reverse();
 }
 
 export async function getVisitorReactions(type: ContentType, slug: string, visitorId: string | null) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X, Trash2, ShieldOff, ShieldAlert } from "lucide-react";
+import { Check, X, Trash2, ShieldOff, ShieldAlert, CornerDownRight, Flag, ThumbsUp, ThumbsDown } from "lucide-react";
 import { cmsFetch } from "@/lib/cms-fetch";
 
 interface CommentRow {
@@ -14,6 +14,11 @@ interface CommentRow {
   spamScore: number;
   spamReason: string | null;
   post: { title: string; type: string };
+  parent: { authorName: string; body: string } | null;
+  replyToName: string | null;
+  likeCount: number;
+  dislikeCount: number;
+  reportCount: number;
 }
 
 export default function CmsCommentsPage() {
@@ -95,7 +100,32 @@ export default function CmsCommentsPage() {
                 {c.status}
               </span>
             </div>
-            <p className="mt-2 text-sm text-white/70">{c.body}</p>
+            {c.parent ? (
+              <div className="mt-2 flex gap-1.5 rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-white/45">
+                <CornerDownRight size={13} className="mt-0.5 shrink-0" />
+                <p className="min-w-0">
+                  Reply to <span className="font-semibold text-white/70">{c.replyToName || c.parent.authorName}</span> in the thread
+                  started by {c.parent.authorName}: <span className="italic">“{c.parent.body.length > 120 ? `${c.parent.body.slice(0, 120)}…` : c.parent.body}”</span>
+                </p>
+              </div>
+            ) : null}
+            <p className="mt-2 whitespace-pre-line text-sm text-white/70">{c.body}</p>
+            {c.reportCount > 0 || c.likeCount > 0 || c.dislikeCount > 0 ? (
+              <p className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-white/40">
+                {c.reportCount > 0 ? (
+                  <span className="flex items-center gap-1 font-semibold text-red-400">
+                    <Flag size={12} /> Reported by {c.reportCount} {c.reportCount === 1 ? "reader" : "readers"}
+                    {c.reportCount >= 3 && c.status === "PENDING" ? " — hidden until you review it" : ""}
+                  </span>
+                ) : null}
+                <span className="flex items-center gap-1">
+                  <ThumbsUp size={12} /> {c.likeCount}
+                </span>
+                <span className="flex items-center gap-1">
+                  <ThumbsDown size={12} /> {c.dislikeCount}
+                </span>
+              </p>
+            ) : null}
             {c.spamScore > 0 && (
               <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-400">
                 <ShieldAlert size={12} /> Spam score {c.spamScore}/100

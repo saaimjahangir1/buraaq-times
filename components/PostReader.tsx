@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Link2,
 } from "lucide-react";
-import { Post, postHref } from "@/lib/types";
+import { Post, postHref, type CommentView } from "@/lib/types";
+import Comments from "./Comments";
 import ReadingAssistant from "./ReadingAssistant";
 import ParagraphWithVocab from "./ParagraphWithVocab";
 import ProgressBar from "./ProgressBar";
@@ -32,13 +33,6 @@ export interface ReaderPrefs {
   font: "body" | "display" | "serif";
   focus: boolean;
   highlightMode: boolean;
-}
-
-interface CommentItem {
-  id: string;
-  name: string;
-  text: string;
-  pending?: boolean;
 }
 
 function sectionLabel(paragraph: string) {
@@ -65,7 +59,7 @@ export default function PostReader({
   related: Post[];
   prev?: Post;
   next?: Post;
-  initialComments?: { id: string; name: string; text: string }[];
+  initialComments?: CommentView[];
   initialLiked?: boolean;
   initialSaved?: boolean;
 }) {
@@ -87,11 +81,6 @@ export default function PostReader({
   const shareRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
-  const [commentName, setCommentName] = useState("");
-  const [commentEmail, setCommentEmail] = useState("");
-  const [commentBody, setCommentBody] = useState("");
-  const [commentError, setCommentError] = useState<string | null>(null);
-  const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [copied, setCopied] = useState(false);
 
   // Fire-and-forget view tracking — best effort, never blocks rendering.
@@ -444,90 +433,7 @@ export default function PostReader({
           {/* Comments */}
           {!prefs.focus && (
             <div className="mt-10">
-              <p className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
-                <MessageCircle size={18} /> Comments ({comments.length})
-              </p>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  setCommentError(null);
-                  if (!commentName.trim() || !commentEmail.trim() || !commentBody.trim()) {
-                    setCommentError("Fill in your name, email, and a comment.");
-                    return;
-                  }
-                  try {
-                    const res = await fetch("/api/comments", {
-                      method: "POST",
-                      headers: { "content-type": "application/json" },
-                      body: JSON.stringify({
-                        type: post.type,
-                        slug: post.slug,
-                        authorName: commentName,
-                        authorEmail: commentEmail,
-                        body: commentBody,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || "Failed to post comment");
-                    setComments([{ ...data.comment, pending: true }, ...comments]);
-                    setCommentBody("");
-                  } catch (err) {
-                    setCommentError(err instanceof Error ? err.message : "Failed to post comment");
-                  }
-                }}
-                className="mb-5 space-y-2"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <input
-                    value={commentName}
-                    onChange={(e) => setCommentName(e.target.value)}
-                    placeholder="Name"
-                    className="glass-pill focus-ring flex-1 px-4 py-2.5 text-sm outline-none dark:text-white"
-                  />
-                  <input
-                    type="email"
-                    value={commentEmail}
-                    onChange={(e) => setCommentEmail(e.target.value)}
-                    placeholder="Email (not shown publicly)"
-                    className="glass-pill focus-ring flex-1 px-4 py-2.5 text-sm outline-none dark:text-white"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    value={commentBody}
-                    onChange={(e) => setCommentBody(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="glass-pill focus-ring flex-1 px-4 py-2.5 text-sm outline-none dark:text-white"
-                  />
-                  <button
-                    type="submit"
-                    className="focus-ring rounded-full bg-signal px-4 py-2.5 text-sm font-semibold text-white"
-                  >
-                    Post
-                  </button>
-                </div>
-                {commentError && <p className="text-xs text-red-500">{commentError}</p>}
-              </form>
-              <ul className="space-y-3">
-                {comments.map((c) => (
-                  <li key={c.id} className="glass rounded-glass p-4 text-sm">
-                    <p className="flex items-center gap-2 font-semibold text-ink dark:text-white">
-                      {c.name}
-                      {c.pending && (
-                        <span className="rounded-full bg-signal/10 px-2 py-0.5 text-[10px] font-medium uppercase text-signal">
-                          Awaiting approval
-                        </span>
-                      )}
-                    </p>
-                    <p className="mt-1 text-ink/70 dark:text-white/70">{c.text}</p>
-                  </li>
-                ))}
-                {comments.length === 0 && (
-                  <p className="text-sm text-ink/40 dark:text-white/40">
-                    Be the first to comment.
-                  </p>
-                )}
-              </ul>
+              <Comments type={post.type as "news" | "article"} slug={post.slug} initial={initialComments} />
             </div>
           )}
         </div>

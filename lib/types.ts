@@ -41,3 +41,19 @@ export const CATEGORIES = [
   "Entertainment",
   "Local",
 ] as const;
+
+/** A public comment as the reader sees it (replies nested one level). */
+export interface CommentView {
+  id: string;
+  name: string;
+  text: string;
+  createdAt: string; // ISO
+  likes: number;
+  dislikes: number;
+  /** This visitor's vote, if any. */
+  myVote: "LIKE" | "DISLIKE" | null;
+  replyToName: string | null;
+  replies: CommentView[];
+  /** Only on the visitor's own just-posted comment (not yet approved). */
+  pending?: boolean;
+}
