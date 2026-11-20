@@ -48,7 +48,7 @@ export default async function ProofreadReviewPage({ params }: { params: { id: st
     <div>
       <Link
         href="/proofread"
-        className="focus-ring mb-4 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm text-white/50 hover:text-white"
+        className="focus-ring mb-4 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm text-ink/60 dark:text-white/50 hover:text-ink dark:hover:text-white"
       >
         <ArrowLeft size={15} /> Back to the queue
       </Link>

@@ -64,8 +64,8 @@ export default function MediaPicker({
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
       <div className="glass-strong flex max-h-[80vh] w-full max-w-2xl flex-col rounded-glass p-5">
         <div className="mb-4 flex items-center justify-between">
-          <p className="font-display text-lg font-bold text-white">Media Library</p>
-          <button onClick={onClose} className="focus-ring rounded-full p-1.5 text-white/50 hover:bg-white/10">
+          <p className="font-display text-lg font-bold text-ink dark:text-white">Media Library</p>
+          <button onClick={onClose} className="focus-ring rounded-full p-1.5 text-ink/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10">
             <X size={18} />
           </button>
         </div>
@@ -74,14 +74,14 @@ export default function MediaPicker({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="focus-ring flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 py-4 text-sm font-medium text-white/60 transition hover:border-signal hover:text-white"
+            className="focus-ring flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-black/20 dark:border-white/20 py-4 text-sm font-medium text-ink/65 dark:text-white/60 transition hover:border-signal hover:text-ink dark:hover:text-white"
           >
             {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
             {uploading ? "Uploading..." : "Upload new image"}
           </button>
-          {uploadError && <p className="mt-2 text-center text-xs text-red-400">{uploadError}</p>}
+          {uploadError && <p className="mt-2 text-center text-xs text-red-700 dark:text-red-400">{uploadError}</p>}
           {crop && (
-            <p className="mt-2 text-center text-xs text-white/30">
+            <p className="mt-2 text-center text-xs text-ink/45 dark:text-white/30">
               New uploads are auto-cropped to 16:9, framed around the most interesting part of the photo.
             </p>
           )}
@@ -95,15 +95,15 @@ export default function MediaPicker({
         />
 
         <div className="grid flex-1 grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4">
-          {loading && <p className="col-span-full text-center text-sm text-white/40">Loading...</p>}
+          {loading && <p className="col-span-full text-center text-sm text-ink/55 dark:text-white/40">Loading...</p>}
           {!loading && items.length === 0 && (
-            <p className="col-span-full text-center text-sm text-white/40">No media yet — upload one above.</p>
+            <p className="col-span-full text-center text-sm text-ink/55 dark:text-white/40">No media yet — upload one above.</p>
           )}
           {items.map((m) => (
             <button
               key={m.id}
               onClick={() => onSelect(m.url, m.altText || "")}
-              className="focus-ring group relative aspect-square overflow-hidden rounded-xl border border-white/10"
+              className="focus-ring group relative aspect-square overflow-hidden rounded-xl border border-black/10 dark:border-white/10"
             >
               <Image src={m.url} alt={m.altText || ""} fill unoptimized className="object-cover transition group-hover:scale-105" />
             </button>

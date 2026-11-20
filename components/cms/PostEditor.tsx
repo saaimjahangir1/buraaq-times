@@ -161,7 +161,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none min-h-[400px] px-5 py-4 focus:outline-none prose-headings:font-display prose-a:text-signal",
+          "prose dark:prose-invert max-w-none min-h-[400px] px-5 py-4 focus:outline-none prose-headings:font-display prose-a:text-[rgb(var(--accent-ink))]",
       },
     },
   });
@@ -459,7 +459,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
   };
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center text-white/40">Loading...</div>;
+    return <div className="flex h-64 items-center justify-center text-ink/55 dark:text-white/40">Loading...</div>;
   }
 
   const filteredTagOptions = tagOptions.filter(
@@ -470,25 +470,25 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
       <div>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-2xl font-bold text-white">
+          <h1 className="font-display text-2xl font-bold text-ink dark:text-white">
             {isNew && !currentId ? `New ${type === "news" ? "News Post" : "Article"}` : "Edit"}
           </h1>
           <div className="flex items-center gap-2">
             {currentId && (
               <button
                 onClick={loadRevisions}
-                className="focus-ring flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-2 text-xs font-medium text-white/60 hover:bg-white/10"
+                className="focus-ring flex items-center gap-1.5 rounded-full bg-white/60 dark:bg-white/5 px-3 py-2 text-xs font-medium text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10"
               >
                 <History size={14} /> History
               </button>
             )}
             {lastSaved && (
-              <span className="text-xs text-white/30">Saved {lastSaved.toLocaleTimeString()}</span>
+              <span className="text-xs text-ink/45 dark:text-white/30">Saved {lastSaved.toLocaleTimeString()}</span>
             )}
           </div>
         </div>
 
-        {error && <p className="mb-3 rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-400">{error}</p>}
+        {error && <p className="mb-3 rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
         {notice && (
           <p className="mb-3 flex items-center gap-2 rounded-xl bg-signal/10 px-4 py-2 text-sm text-signal">
             <CheckCircle2 size={15} className="shrink-0" /> {notice}
@@ -497,10 +497,10 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
 
         {reviewState === "PENDING" && review && (
           <div className="mb-4 flex flex-wrap items-start gap-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm">
-            <SpellCheck size={17} className="mt-0.5 shrink-0 text-amber-300" />
+            <SpellCheck size={17} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-300" />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-amber-200">Waiting for a proofreader</p>
-              <p className="text-white/60">
+              <p className="font-semibold text-amber-700 dark:text-amber-200">Waiting for a proofreader</p>
+              <p className="text-ink/65 dark:text-white/60">
                 Submitted {timeAgo(review.createdAt)}
                 {review.isUpdate ? " — the live version stays up until it's approved" : ""}. You can still change it
                 until someone picks it up.
@@ -513,8 +513,8 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-3 text-sm">
             <Lock size={17} className="mt-0.5 shrink-0 text-cyan" />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-white">Being proofread by {review.claimedBy ?? "a proofreader"}</p>
-              <p className="text-white/60">
+              <p className="font-semibold text-ink dark:text-white">Being proofread by {review.claimedBy ?? "a proofreader"}</p>
+              <p className="text-ink/65 dark:text-white/60">
                 Picked up {review.claimedAt ? timeAgo(review.claimedAt) : "recently"}. Editing is locked until they approve,
                 return or release it.
               </p>
@@ -524,15 +524,15 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
 
         {reviewState === "REJECTED" && review && (
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm">
-            <AlertTriangle size={17} className="mt-0.5 shrink-0 text-red-400" />
+            <AlertTriangle size={17} className="mt-0.5 shrink-0 text-red-700 dark:text-red-400" />
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-red-300">Returned by {review.claimedBy ?? "a proofreader"}</p>
+              <p className="font-semibold text-red-700 dark:text-red-300">Returned by {review.claimedBy ?? "a proofreader"}</p>
               {review.rejectReason && (
-                <p className="mt-1 whitespace-pre-line rounded-lg bg-black/20 px-3 py-2 text-white/80">
+                <p className="mt-1 whitespace-pre-line rounded-lg bg-black/20 px-3 py-2 text-ink/85 dark:text-white/80">
                   {review.rejectReason}
                 </p>
               )}
-              <p className="mt-1 text-white/60">
+              <p className="mt-1 text-ink/65 dark:text-white/60">
                 Their corrections are already in the text below. Fix the rest and submit it again
                 {review.isUpdate ? " — the live version hasn't changed." : "."}
               </p>
@@ -541,7 +541,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
         )}
 
         {!isAdmin && live && !reviewState && (
-          <p className="mb-4 flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2 text-xs text-white/50">
+          <p className="mb-4 flex items-center gap-2 rounded-xl bg-white/60 dark:bg-white/5 px-4 py-2 text-xs text-ink/60 dark:text-white/50">
             <SpellCheck size={14} className="shrink-0" /> This post is live. Your edits go to a proofreader and replace
             the live version once they&apos;re approved.
           </p>
@@ -552,7 +552,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
           disabled={locked}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Headline"
-          className="focus-ring mb-3 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 font-display text-xl font-bold text-white outline-none placeholder:text-white/30"
+          className="focus-ring mb-3 w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-3 font-display text-xl font-bold text-ink dark:text-white outline-none placeholder:text-ink/45 dark:placeholder:text-white/30"
         />
         <textarea
           value={summary}
@@ -560,15 +560,15 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
           onChange={(e) => setSummary(e.target.value)}
           rows={2}
           placeholder="Short summary / deck"
-          className="focus-ring mb-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30"
+          className="focus-ring mb-4 w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-3 text-sm text-ink dark:text-white outline-none placeholder:text-ink/45 dark:placeholder:text-white/30"
         />
 
         <EditorToolbar editor={editor} onRequestImage={() => setShowMediaPicker("inline")} />
-        <div className="rounded-b-glass border border-white/10 bg-white/[0.02]">
+        <div className="rounded-b-glass border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.02]">
           <EditorContent editor={editor} />
         </div>
         {editor && (
-          <p className="mt-2 text-right text-xs text-white/30">
+          <p className="mt-2 text-right text-xs text-ink/45 dark:text-white/30">
             {editor.storage.characterCount.words()} words · {" "}
             {Math.max(1, Math.round(editor.storage.characterCount.words() / 200))} min read
           </p>
@@ -589,10 +589,10 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
       {/* Sidebar */}
       <div className="space-y-5">
         <div className="glass rounded-glass p-5">
-          <p className="mb-3 font-display text-sm font-bold text-white">Publish</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Publish</p>
           <div className="space-y-2">
             {locked ? (
-              <p className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-3 text-xs text-white/50">
+              <p className="flex items-center gap-2 rounded-xl bg-white/60 dark:bg-white/5 px-3 py-3 text-xs text-ink/60 dark:text-white/50">
                 <Lock size={14} className="shrink-0" /> Locked while {review?.claimedBy ?? "a proofreader"} works on it.
               </p>
             ) : (
@@ -602,7 +602,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                   <button
                     onClick={() => save("DRAFT")}
                     disabled={saving}
-                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/10 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 disabled:opacity-60"
+                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/60 dark:bg-white/10 py-2.5 text-sm font-semibold text-ink dark:text-white transition hover:bg-black/10 dark:hover:bg-white/20 disabled:opacity-60"
                   >
                     {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                     Save Draft
@@ -615,8 +615,8 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                     submitForReview(live && status === "SCHEDULED" ? "SCHEDULED" : "PUBLISHED")
                   }
                   disabled={saving}
-                  className={`focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-white transition disabled:opacity-60 ${
-                    isAdmin ? "bg-white/10 hover:bg-white/20" : "bg-signal shadow-glow"
+                  className={`focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-ink dark:text-white transition disabled:opacity-60 ${
+                    isAdmin ? "bg-white/60 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20" : "bg-signal shadow-glow"
                   }`}
                 >
                   {saving && !isAdmin ? <Loader2 size={15} className="animate-spin" /> : <SpellCheck size={15} />}
@@ -631,7 +631,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                   <button
                     onClick={() => save("PUBLISHED")}
                     disabled={saving}
-                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-signal py-2.5 text-sm font-semibold text-white shadow-glow transition disabled:opacity-60"
+                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-signal py-2.5 text-sm font-semibold text-black shadow-glow transition disabled:opacity-60"
                   >
                     <Send size={15} /> Publish now (skip proofreading)
                   </button>
@@ -640,19 +640,19 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                 {/* Scheduling: a new schedule needs proofreading too (admins can skip it). */}
                 {(!live || isAdmin) && (
                   <>
-                    <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2">
-                      <CalendarClock size={15} className="shrink-0 text-white/40" />
+                    <div className="flex items-center gap-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 p-2">
+                      <CalendarClock size={15} className="shrink-0 text-ink/55 dark:text-white/40" />
                       <input
                         type="datetime-local"
                         value={scheduledAt}
                         onChange={(e) => setScheduledAt(e.target.value)}
-                        className="w-full bg-transparent text-xs text-white outline-none"
+                        className="w-full bg-transparent text-xs text-ink dark:text-white outline-none"
                       />
                     </div>
                     <button
                       onClick={() => (isAdmin ? save("SCHEDULED") : submitForReview("SCHEDULED"))}
                       disabled={saving || !scheduledAt}
-                      className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-cyanDeep/80 py-2.5 text-sm font-semibold text-white transition disabled:opacity-40"
+                      className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-cyanDeep/80 py-2.5 text-sm font-semibold text-ink dark:text-white transition disabled:opacity-40"
                     >
                       {isAdmin ? "Schedule Publish" : "Schedule (after proofreading)"}
                     </button>
@@ -663,7 +663,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                   <button
                     onClick={withdrawReview}
                     disabled={saving}
-                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/5 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 disabled:opacity-60"
+                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/60 dark:bg-white/5 py-2.5 text-sm font-semibold text-ink/75 dark:text-white/70 transition hover:bg-black/5 dark:hover:bg-white/10 disabled:opacity-60"
                   >
                     <Undo2 size={15} />
                     {reviewState === "PENDING" ? "Withdraw from proofreading" : "Discard returned changes"}
@@ -673,7 +673,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                 {status === "PUBLISHED" && reviewState !== "PENDING" && (
                   <button
                     onClick={() => save("ARCHIVED")}
-                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/10 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/60 dark:bg-white/10 py-2.5 text-sm font-semibold text-ink dark:text-white transition hover:bg-black/10 dark:hover:bg-white/20"
                   >
                     <Archive size={15} /> Archive
                   </button>
@@ -681,7 +681,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                 {currentId && (
                   <button
                     onClick={remove}
-                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+                    className="focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-semibold text-red-700 dark:text-red-400 transition hover:bg-red-500/10"
                   >
                     <Trash2 size={15} /> Delete
                   </button>
@@ -689,18 +689,18 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
               </>
             )}
           </div>
-          <p className="mt-3 text-center text-xs text-white/30">
-            Current status: <span className="font-medium text-white/60">{status.replace("_", " ")}</span>
+          <p className="mt-3 text-center text-xs text-ink/45 dark:text-white/30">
+            Current status: <span className="font-medium text-ink/65 dark:text-white/60">{status.replace("_", " ")}</span>
           </p>
           {isAdmin && reviewState === "PENDING" && (
-            <p className="mt-1 text-center text-[11px] text-white/30">
+            <p className="mt-1 text-center text-[11px] text-ink/45 dark:text-white/30">
               Publishing or saving directly will cancel the waiting submission.
             </p>
           )}
         </div>
 
         <div className="glass rounded-glass p-5">
-          <p className="mb-3 font-display text-sm font-bold text-white">Featured Image</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Featured Image</p>
           {featuredImageUrl ? (
             <div className="relative mb-2 aspect-video overflow-hidden rounded-xl">
               <NextImage src={featuredImageUrl} alt={featuredImageAlt} fill unoptimized className="object-cover" />
@@ -718,7 +718,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
           ) : (
             <button
               onClick={() => setShowMediaPicker("featured")}
-              className="focus-ring mb-2 flex aspect-video w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 text-sm text-white/50 hover:border-signal hover:text-white"
+              className="focus-ring mb-2 flex aspect-video w-full items-center justify-center gap-2 rounded-xl border border-dashed border-black/20 dark:border-white/20 text-sm text-ink/60 dark:text-white/50 hover:border-signal hover:text-ink dark:hover:text-white"
             >
               <ImagePlus size={16} /> Choose image
             </button>
@@ -727,11 +727,11 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
             value={featuredImageAlt}
             onChange={(e) => setFeaturedImageAlt(e.target.value)}
             placeholder="Alt text"
-            className="focus-ring w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
+            className="focus-ring w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 text-xs text-ink dark:text-white outline-none"
           />
 
           {featuredImageUrl && (
-            <div className="mt-3 border-t border-white/10 pt-3">
+            <div className="mt-3 border-t border-black/10 dark:border-white/10 pt-3">
               <button
                 onClick={async () => {
                   setGeneratingBranded(true);
@@ -763,9 +763,9 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                   : "Generate branded images"}
               </button>
               {!title.trim() && (
-                <p className="mt-1.5 text-center text-[11px] text-white/30">Add a title first.</p>
+                <p className="mt-1.5 text-center text-[11px] text-ink/45 dark:text-white/30">Add a title first.</p>
               )}
-              {brandedError && <p className="mt-1.5 text-center text-[11px] text-red-400">{brandedError}</p>}
+              {brandedError && <p className="mt-1.5 text-center text-[11px] text-red-700 dark:text-red-400">{brandedError}</p>}
 
               {brandedFeaturedImageUrl && (
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -773,13 +773,13 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                     <div className="relative aspect-video overflow-hidden rounded-lg">
                       <NextImage src={brandedFeaturedImageUrl} alt="Branded hero preview" fill unoptimized className="object-cover" />
                     </div>
-                    <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Hero (16:9)</p>
+                    <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-ink/45 dark:text-white/30">Hero (16:9)</p>
                   </div>
                   <div>
                     <div className="relative aspect-[4/5] overflow-hidden rounded-lg">
                       <NextImage src={brandedSocialImageUrl} alt="Branded social preview" fill unoptimized className="object-cover" />
                     </div>
-                    <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Social (4:5)</p>
+                    <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-ink/45 dark:text-white/30">Social (4:5)</p>
                   </div>
                 </div>
               )}
@@ -788,15 +788,15 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
         </div>
 
         <div className="glass rounded-glass p-5">
-          <p className="mb-3 font-display text-sm font-bold text-white">Homepage Placement</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Homepage Placement</p>
           <div className="space-y-2 text-sm">
             {[
               { key: "featured" as const, label: "Featured (hero)", val: featured, set: setFeatured },
               { key: "trending" as const, label: "Trending rail", val: trending, set: setTrending },
               { key: "editorsPick" as const, label: "Editor's Pick", val: editorsPick, set: setEditorsPick },
             ].map((f) => (
-              <label key={f.key} className="flex cursor-pointer items-center justify-between rounded-xl bg-white/5 px-3 py-2.5">
-                <span className="text-white/70">{f.label}</span>
+              <label key={f.key} className="flex cursor-pointer items-center justify-between rounded-xl bg-white/60 dark:bg-white/5 px-3 py-2.5">
+                <span className="text-ink/75 dark:text-white/70">{f.label}</span>
                 <input
                   type="checkbox"
                   checked={f.val}
@@ -809,7 +809,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
         </div>
 
         <div className="glass rounded-glass p-5">
-          <p className="mb-3 font-display text-sm font-bold text-white">Category</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Category</p>
           <Select
   		value={categoryId}
   		onChange={setCategoryId}
@@ -822,7 +822,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
         </div>
 
         <div className="glass relative rounded-glass p-5">
-          <p className="mb-3 font-display text-sm font-bold text-white">Tags</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Tags</p>
           <div className="mb-2 flex flex-wrap gap-1.5">
             {tags.map((t) => (
               <span
@@ -846,10 +846,10 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
               }
             }}
             placeholder="Add a tag, press Enter"
-            className="focus-ring w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none"
+            className="focus-ring w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 text-xs text-ink dark:text-white outline-none"
           />
           {tagInput && filteredTagOptions.length > 0 && (
-            <div className="absolute inset-x-5 z-10 mt-1 rounded-xl border border-white/10 bg-charcoal p-1.5 shadow-glass-dark">
+            <div className="absolute inset-x-5 z-10 mt-1 rounded-xl border border-black/10 dark:border-white/10 bg-paper dark:bg-charcoal p-1.5 shadow-glass-dark">
               {filteredTagOptions.slice(0, 5).map((t) => (
                 <button
                   key={t.id}
@@ -857,7 +857,7 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
                     setTags([...tags, t.name]);
                     setTagInput("");
                   }}
-                  className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-white/70 hover:bg-white/10"
+                  className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-ink/75 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   {t.name}
                 </button>
@@ -887,20 +887,20 @@ export default function PostEditor({ type, postId }: { type: "news" | "article";
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
           <div className="glass-strong flex max-h-[80vh] w-full max-w-lg flex-col rounded-glass p-5">
             <div className="mb-4 flex items-center justify-between">
-              <p className="font-display text-lg font-bold text-white">Version History</p>
+              <p className="font-display text-lg font-bold text-ink dark:text-white">Version History</p>
               <button
                 onClick={() => setShowHistory(false)}
-                className="focus-ring rounded-full p-1.5 text-white/50 hover:bg-white/10"
+                className="focus-ring rounded-full p-1.5 text-ink/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10"
               >
                 <X size={18} />
               </button>
             </div>
             <div className="flex-1 space-y-2 overflow-y-auto">
-              {revisions.length === 0 && <p className="text-sm text-white/40">No revisions yet.</p>}
+              {revisions.length === 0 && <p className="text-sm text-ink/55 dark:text-white/40">No revisions yet.</p>}
               {revisions.map((r) => (
-                <div key={r.id} className="rounded-xl bg-white/5 p-3 text-sm">
-                  <p className="font-medium text-white/80">{r.title}</p>
-                  <p className="text-xs text-white/40">
+                <div key={r.id} className="rounded-xl bg-white/60 dark:bg-white/5 p-3 text-sm">
+                  <p className="font-medium text-ink/85 dark:text-white/80">{r.title}</p>
+                  <p className="text-xs text-ink/55 dark:text-white/40">
                     {r.editor.name} · {new Date(r.createdAt).toLocaleString()}
                   </p>
                 </div>

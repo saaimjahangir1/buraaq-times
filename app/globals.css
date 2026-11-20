@@ -452,3 +452,101 @@ body::before {
 .ad-slot:has(ins.adsbygoogle[data-ad-status="unfilled"]) {
   display: none;
 }
+
+/* ================================================================== */
+/* CMS & proofreading desk — warm frosted-glass theme                  */
+/* (light by default, dark with the toggle in the top bar). The class  */
+/* .cms-warm sits on <body> in /cms and /proofread only.               */
+/* ================================================================== */
+
+.cms-warm {
+  background-color: #e7dfd2;
+  /* Golden yellow for fills (buttons, active badges, bars) in both themes. */
+  --accent: 240 185 11;
+  --accent-2: 214 140 0;
+  --accent-2-deep: 180 118 0;
+  /* Yellow is too light for text on light glass — text uses this deeper gold. */
+  --accent-ink: 133 92 0;
+
+  --lg-a: 0.5;
+  --lg-strong-base: rgb(255 255 255 / 0.74);
+  --lg-blur: 26px;
+  --lg-sat: 150%;
+  --lg-outline: rgb(255 255 255 / 0.75);
+  --lg-rim-hi: rgb(255 255 255 / 1);
+  --lg-rim-lo: rgb(255 255 255 / 0.5);
+  --lg-drop:
+    0 1px 2px rgb(70 52 25 / 0.06),
+    0 18px 44px -22px rgb(70 52 25 / 0.32);
+  --lg-wash-1: transparent;
+  --lg-wash-2: transparent;
+}
+
+.dark .cms-warm {
+  background-color: #14110d;
+  --accent-ink: 240 185 11;
+  --lg-a: 0.07;
+  --lg-strong-base: rgb(32 27 21 / 0.7);
+  --lg-blur: 26px;
+  --lg-outline: rgb(255 255 255 / 0.09);
+  --lg-rim-hi: rgb(255 255 255 / 0.45);
+  --lg-rim-lo: rgb(255 255 255 / 0.1);
+  --lg-drop:
+    0 1px 2px rgb(0 0 0 / 0.4),
+    0 20px 50px -22px rgb(0 0 0 / 0.8);
+}
+
+/* (not inside the sign-in pages, which stay dark) */
+html:not(.dark) .cms-warm .text-signal:not(.dark .text-signal),
+html:not(.dark) .cms-warm .hover\:text-signal:hover:not(.dark .hover\:text-signal) {
+  color: rgb(var(--accent-ink));
+}
+
+/* The warm blurred "room" behind everything (no photo — drawn in CSS). */
+.cms-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 46% at 82% 18%, rgb(255 250 238 / 0.95), transparent 70%),
+    radial-gradient(30% 38% at 14% 22%, rgb(222 205 176 / 0.9), transparent 72%),
+    radial-gradient(34% 30% at 30% 82%, rgb(196 176 142 / 0.75), transparent 70%),
+    radial-gradient(26% 30% at 62% 66%, rgb(150 150 104 / 0.38), transparent 70%),
+    radial-gradient(22% 26% at 92% 78%, rgb(214 190 150 / 0.7), transparent 70%),
+    radial-gradient(28% 22% at 50% 4%, rgb(246 220 160 / 0.45), transparent 70%),
+    linear-gradient(160deg, #efe7da 0%, #e3d8c6 48%, #d8cab4 100%);
+}
+.dark .cms-backdrop {
+  background:
+    radial-gradient(38% 46% at 82% 18%, rgb(120 92 44 / 0.35), transparent 70%),
+    radial-gradient(30% 38% at 14% 22%, rgb(70 58 40 / 0.6), transparent 72%),
+    radial-gradient(34% 30% at 30% 82%, rgb(58 48 34 / 0.55), transparent 70%),
+    radial-gradient(26% 30% at 62% 66%, rgb(60 64 40 / 0.35), transparent 70%),
+    radial-gradient(22% 26% at 92% 78%, rgb(90 70 40 / 0.35), transparent 70%),
+    linear-gradient(160deg, #1b1712 0%, #15120e 50%, #100d0a 100%);
+}
+
+/* Pill rows that scroll sideways without a visible scrollbar. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Diagonal stripes, as on the video's progress bars. */
+.cms-stripes {
+  background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.13) 0 2px, transparent 2px 7px);
+}
+.dark .cms-stripes {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.16) 0 2px, transparent 2px 7px);
+}
+
+/* Page titles in the CMS / desk: large and light, as in the dashboard. */
+.cms-warm main h1.font-display:not(.cms-hero) {
+  font-weight: 400;
+  font-size: clamp(1.7rem, 2.6vw, 2.15rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}

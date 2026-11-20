@@ -60,8 +60,8 @@ export default function TwoFactorSettings({
 
   return (
     <div className="glass mt-5 rounded-glass p-6">
-      <p className="mb-1 font-display text-base font-bold text-white">Two-Factor Authentication</p>
-      <p className="mb-4 text-sm text-white/50">
+      <p className="mb-1 font-display text-base font-bold text-ink dark:text-white">Two-Factor Authentication</p>
+      <p className="mb-4 text-sm text-ink/60 dark:text-white/50">
         {enabled
           ? "On — a 6-digit code from your authenticator app is needed at every sign-in. It's required for all accounts."
           : "Required for all accounts — set up an authenticator app."}
@@ -72,7 +72,7 @@ export default function TwoFactorSettings({
           onClick={startSetup}
           disabled={loading}
           className={`focus-ring flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold disabled:opacity-60 ${
-            enabled ? "bg-white/10 text-white hover:bg-white/15" : "bg-signal text-white"
+            enabled ? "bg-white/60 dark:bg-white/10 text-ink dark:text-white hover:bg-black/10 dark:hover:bg-white/15" : "bg-signal text-black"
           }`}
         >
           {loading ? <Loader2 size={15} className="animate-spin" /> : enabled ? <Smartphone size={15} /> : <ShieldCheck size={15} />}
@@ -82,7 +82,7 @@ export default function TwoFactorSettings({
 
       {step === "setup" && (
         <div>
-          <p className="mb-3 text-sm text-white/60">
+          <p className="mb-3 text-sm text-ink/65 dark:text-white/60">
             Scan this with the authenticator app on your new phone (Google Authenticator, 1Password, Authy...), or
             enter the code manually. Your current app keeps working until you confirm a code from the new one.
           </p>
@@ -90,7 +90,7 @@ export default function TwoFactorSettings({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={qrDataUrl} alt="2FA QR code" className="mb-3 h-40 w-40 rounded-xl bg-white p-2" />
           )}
-          <p className="mb-4 break-all rounded-lg bg-white/5 p-2 font-mono text-xs text-white/50">{secret}</p>
+          <p className="mb-4 break-all rounded-lg bg-white/60 dark:bg-white/5 p-2 font-mono text-xs text-ink/60 dark:text-white/50">{secret}</p>
           <form onSubmit={confirmSetup} className="flex items-center gap-2">
             <input
               required
@@ -99,19 +99,19 @@ export default function TwoFactorSettings({
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               placeholder="000000"
-              className="focus-ring w-32 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center font-mono tracking-widest text-white outline-none"
+              className="focus-ring w-32 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 text-center font-mono tracking-widest text-ink dark:text-white outline-none"
             />
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="focus-ring rounded-full bg-signal px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              className="focus-ring rounded-full bg-signal px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
             >
               Confirm
             </button>
             <button
               type="button"
               onClick={() => setStep("idle")}
-              className="focus-ring text-xs text-white/40 hover:text-white/70"
+              className="focus-ring text-xs text-ink/55 dark:text-white/40 hover:text-ink/75 dark:hover:text-white/70"
             >
               Cancel
             </button>
@@ -119,7 +119,7 @@ export default function TwoFactorSettings({
         </div>
       )}
 
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
     </div>
   );
 }

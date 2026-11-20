@@ -43,7 +43,7 @@ function Btn({
       aria-label={label}
       title={label}
       className={`focus-ring rounded-lg p-2 transition ${
-        active ? "bg-signal text-white" : "text-white/60 hover:bg-white/10 hover:text-white"
+        active ? "bg-signal text-black" : "text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10 hover:text-ink dark:hover:text-white"
       }`}
     >
       {children}
@@ -74,14 +74,14 @@ export default function EditorToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 rounded-t-glass border border-b-0 border-white/10 bg-white/[0.03] p-1.5">
+    <div className="flex flex-wrap items-center gap-0.5 rounded-t-glass border border-b-0 border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.03] p-1.5">
       <Btn label="Undo" onClick={() => editor.chain().focus().undo().run()}>
         <Undo size={15} />
       </Btn>
       <Btn label="Redo" onClick={() => editor.chain().focus().redo().run()}>
         <Redo size={15} />
       </Btn>
-      <div className="mx-1 h-5 w-px bg-white/10" />
+      <div className="mx-1 h-5 w-px bg-white/60 dark:bg-white/10" />
       <Btn label="Heading 1" active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
         <Heading1 size={15} />
       </Btn>
@@ -91,7 +91,7 @@ export default function EditorToolbar({
       <Btn label="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
         <Heading3 size={15} />
       </Btn>
-      <div className="mx-1 h-5 w-px bg-white/10" />
+      <div className="mx-1 h-5 w-px bg-white/60 dark:bg-white/10" />
       <Btn label="Bold" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()}>
         <Bold size={15} />
       </Btn>
@@ -107,7 +107,7 @@ export default function EditorToolbar({
       <Btn label="Highlight" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()}>
         <Highlighter size={15} />
       </Btn>
-      <div className="mx-1 h-5 w-px bg-white/10" />
+      <div className="mx-1 h-5 w-px bg-white/60 dark:bg-white/10" />
       <Btn label="Bullet list" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()}>
         <List size={15} />
       </Btn>
@@ -123,7 +123,7 @@ export default function EditorToolbar({
       <Btn label="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
         <Minus size={15} />
       </Btn>
-      <div className="mx-1 h-5 w-px bg-white/10" />
+      <div className="mx-1 h-5 w-px bg-white/60 dark:bg-white/10" />
       <Btn label="Align left" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()}>
         <AlignLeft size={15} />
       </Btn>
@@ -133,7 +133,7 @@ export default function EditorToolbar({
       <Btn label="Align right" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}>
         <AlignRight size={15} />
       </Btn>
-      <div className="mx-1 h-5 w-px bg-white/10" />
+      <div className="mx-1 h-5 w-px bg-white/60 dark:bg-white/10" />
       <Btn label="Link" active={editor.isActive("link")} onClick={setLink}>
         <LinkIcon size={15} />
       </Btn>

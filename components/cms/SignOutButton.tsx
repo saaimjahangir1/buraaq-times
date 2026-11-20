@@ -12,7 +12,7 @@ export default function SignOutButton({ area = "cms", redirectTo }: { area?: "cm
         router.push(redirectTo ?? (area === "desk" ? "/proofread/login" : "/cms/login"));
         router.refresh();
       }}
-      className="focus-ring rounded-full bg-white/10 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/20"
+      className="focus-ring rounded-full bg-white/60 dark:bg-white/10 px-6 py-2.5 text-sm font-semibold text-ink dark:text-white hover:bg-black/10 dark:hover:bg-white/20"
     >
       Sign out
     </button>

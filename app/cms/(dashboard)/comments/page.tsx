@@ -57,8 +57,8 @@ export default function CmsCommentsPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white">Comments</h1>
-      <p className="mt-1 text-sm text-white/50">Moderate reader comments across your posts.</p>
+      <h1 className="font-display text-2xl font-bold text-ink dark:text-white">Comments</h1>
+      <p className="mt-1 text-sm text-ink/60 dark:text-white/50">Moderate reader comments across your posts.</p>
 
       <div className="mt-5 flex gap-1.5">
         {(["PENDING", "SPAM", "ALL"] as const).map((f) => (
@@ -66,7 +66,7 @@ export default function CmsCommentsPage() {
             key={f}
             onClick={() => setFilter(f)}
             className={`focus-ring rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
-              filter === f ? "bg-signal text-white" : "bg-white/5 text-white/50 hover:bg-white/10"
+              filter === f ? "bg-signal text-black" : "bg-white/60 dark:bg-white/5 text-ink/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             {f.toLowerCase()}
@@ -75,45 +75,45 @@ export default function CmsCommentsPage() {
       </div>
 
       <div className="mt-5 space-y-3">
-        {loading && <p className="text-sm text-white/40">Loading...</p>}
+        {loading && <p className="text-sm text-ink/55 dark:text-white/40">Loading...</p>}
         {!loading && visible.length === 0 && (
-          <p className="text-sm text-white/40">Nothing to moderate right now.</p>
+          <p className="text-sm text-ink/55 dark:text-white/40">Nothing to moderate right now.</p>
         )}
         {visible.map((c) => (
           <div key={c.id} className="glass rounded-glass p-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="text-sm font-medium text-white">
-                  {c.authorName} <span className="font-normal text-white/40">on</span> {c.post.title}
+                <p className="text-sm font-medium text-ink dark:text-white">
+                  {c.authorName} <span className="font-normal text-ink/55 dark:text-white/40">on</span> {c.post.title}
                 </p>
-                <p className="text-xs text-white/30">{c.authorEmail}</p>
+                <p className="text-xs text-ink/45 dark:text-white/30">{c.authorEmail}</p>
               </div>
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
                   c.status === "APPROVED"
                     ? "bg-signal/20 text-signal"
                     : c.status === "SPAM" || c.status === "REJECTED"
-                    ? "bg-red-500/20 text-red-400"
-                    : "bg-white/10 text-white/50"
+                    ? "bg-red-500/20 text-red-700 dark:text-red-400"
+                    : "bg-white/60 dark:bg-white/10 text-ink/60 dark:text-white/50"
                 }`}
               >
                 {c.status}
               </span>
             </div>
             {c.parent ? (
-              <div className="mt-2 flex gap-1.5 rounded-lg bg-white/[0.03] px-3 py-2 text-xs text-white/45">
+              <div className="mt-2 flex gap-1.5 rounded-lg bg-white/60 dark:bg-white/[0.03] px-3 py-2 text-xs text-ink/55 dark:text-white/45">
                 <CornerDownRight size={13} className="mt-0.5 shrink-0" />
                 <p className="min-w-0">
-                  Reply to <span className="font-semibold text-white/70">{c.replyToName || c.parent.authorName}</span> in the thread
+                  Reply to <span className="font-semibold text-ink/75 dark:text-white/70">{c.replyToName || c.parent.authorName}</span> in the thread
                   started by {c.parent.authorName}: <span className="italic">“{c.parent.body.length > 120 ? `${c.parent.body.slice(0, 120)}…` : c.parent.body}”</span>
                 </p>
               </div>
             ) : null}
-            <p className="mt-2 whitespace-pre-line text-sm text-white/70">{c.body}</p>
+            <p className="mt-2 whitespace-pre-line text-sm text-ink/75 dark:text-white/70">{c.body}</p>
             {c.reportCount > 0 || c.likeCount > 0 || c.dislikeCount > 0 ? (
-              <p className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-white/40">
+              <p className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-ink/55 dark:text-white/40">
                 {c.reportCount > 0 ? (
-                  <span className="flex items-center gap-1 font-semibold text-red-400">
+                  <span className="flex items-center gap-1 font-semibold text-red-700 dark:text-red-400">
                     <Flag size={12} /> Reported by {c.reportCount} {c.reportCount === 1 ? "reader" : "readers"}
                     {c.reportCount >= 3 && c.status === "PENDING" ? " — hidden until you review it" : ""}
                   </span>
@@ -127,7 +127,7 @@ export default function CmsCommentsPage() {
               </p>
             ) : null}
             {c.spamScore > 0 && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-400">
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
                 <ShieldAlert size={12} /> Spam score {c.spamScore}/100
                 {c.spamReason ? ` — ${c.spamReason}` : ""}
               </p>
@@ -141,19 +141,19 @@ export default function CmsCommentsPage() {
               </button>
               <button
                 onClick={() => moderate(c.id, "REJECTED")}
-                className="focus-ring flex items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10"
+                className="focus-ring flex items-center gap-1 rounded-full bg-white/60 dark:bg-white/5 px-3 py-1.5 text-xs font-medium text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10"
               >
                 <X size={13} /> Reject
               </button>
               <button
                 onClick={() => moderate(c.id, "SPAM")}
-                className="focus-ring flex items-center gap-1 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/10"
+                className="focus-ring flex items-center gap-1 rounded-full bg-white/60 dark:bg-white/5 px-3 py-1.5 text-xs font-medium text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10"
               >
                 <ShieldOff size={13} /> Spam
               </button>
               <button
                 onClick={() => remove(c.id)}
-                className="focus-ring flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/20"
+                className="focus-ring flex items-center gap-1 rounded-full bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-500/20"
               >
                 <Trash2 size={13} /> Delete
               </button>

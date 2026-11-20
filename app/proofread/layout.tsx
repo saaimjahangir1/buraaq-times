@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { display, body, mono } from "@/lib/site-fonts";
 import "../globals.css";
 import LiquidGlassFx from "@/components/LiquidGlassFx";
+import { CMS_THEME_SCRIPT } from "@/lib/cms-theme";
 
 // Its own root layout (like /cms): none of the public site's navbar, footer or
 // 3D scene — and nothing on the public site links here.
@@ -14,8 +15,12 @@ export const metadata: Metadata = {
 
 export default function ProofreadRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${display.variable} ${body.variable} ${mono.variable}`}>
-      <body className="bg-paper text-ink dark:bg-void dark:text-white">
+    // Light by default; the top-bar toggle switches to dark (remembered per browser).
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: CMS_THEME_SCRIPT }} />
+      </head>
+      <body className="cms-warm bg-[#e7dfd2] text-ink dark:bg-[#14110d] dark:text-white">
         <LiquidGlassFx />
         {children}
       </body>

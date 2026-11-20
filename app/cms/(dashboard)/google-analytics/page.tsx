@@ -20,7 +20,7 @@ function change(now: number, before: number) {
 function Card({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="glass rounded-glass p-5">
-      <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold text-white">
+      <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold text-ink dark:text-white">
         {icon}
         {title}
       </p>
@@ -34,23 +34,23 @@ function Stat({ label, value, now, before, percent }: { label: string; value: st
   const up = (c ?? 0) >= 0;
   return (
     <div className="glass rounded-glass p-4">
-      <p className="text-xs text-white/50">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold text-white">{value}</p>
+      <p className="text-xs text-ink/60 dark:text-white/50">{label}</p>
+      <p className="mt-1 font-display text-2xl font-bold text-ink dark:text-white">{value}</p>
       {c !== null && Number.isFinite(c) ? (
-        <p className={`mt-1 flex items-center gap-0.5 text-[11px] font-semibold ${up ? "text-signal" : "text-red-400"}`}>
+        <p className={`mt-1 flex items-center gap-0.5 text-[11px] font-semibold ${up ? "text-signal" : "text-red-700 dark:text-red-400"}`}>
           {up ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
           {Math.abs(c).toFixed(Math.abs(c) < 10 ? 1 : 0)}
-          {percent ? " pts" : "%"} <span className="font-normal text-white/35"><span className="hidden sm:inline">vs previous period</span><span className="sm:hidden">vs before</span></span>
+          {percent ? " pts" : "%"} <span className="font-normal text-ink/50 dark:text-white/35"><span className="hidden sm:inline">vs previous period</span><span className="sm:hidden">vs before</span></span>
         </p>
       ) : (
-        <p className="mt-1 text-[11px] text-white/30">no earlier data</p>
+        <p className="mt-1 text-[11px] text-ink/45 dark:text-white/30">no earlier data</p>
       )}
     </div>
   );
 }
 
 function Bars({ rows, total, capitalize }: { rows: { name: string; value: number }[]; total?: number; capitalize?: boolean }) {
-  if (rows.length === 0) return <p className="text-sm text-white/40">No data yet.</p>;
+  if (rows.length === 0) return <p className="text-sm text-ink/55 dark:text-white/40">No data yet.</p>;
   const max = Math.max(1, ...rows.map((r) => r.value));
   const sum = total ?? rows.reduce((a, r) => a + r.value, 0);
   return (
@@ -58,13 +58,13 @@ function Bars({ rows, total, capitalize }: { rows: { name: string; value: number
       {rows.map((r) => (
         <div key={r.name}>
           <div className="mb-1 flex items-center justify-between gap-3 text-xs">
-            <span className={`truncate text-white/75 ${capitalize ? "capitalize" : ""}`}>{r.name}</span>
-            <span className="shrink-0 text-white/40">
+            <span className={`truncate text-ink/80 dark:text-white/75 ${capitalize ? "capitalize" : ""}`}>{r.name}</span>
+            <span className="shrink-0 text-ink/55 dark:text-white/40">
               {fmt(r.value)}
-              {sum > 0 && <span className="ml-1.5 text-white/25">{Math.round((r.value / sum) * 100)}%</span>}
+              {sum > 0 && <span className="ml-1.5 text-ink/40 dark:text-white/25">{Math.round((r.value / sum) * 100)}%</span>}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-white/5">
+          <div className="h-2 overflow-hidden rounded-full bg-white/60 dark:bg-white/5">
             <div className="h-full rounded-full bg-gradient-to-r from-signal to-cyanDeep" style={{ width: `${Math.max(3, (r.value / max) * 100)}%` }} />
           </div>
         </div>
@@ -90,7 +90,7 @@ function TrendChart({ daily }: { daily: GaSummary["daily"] }) {
 
   return (
     <div>
-      <div className="mb-3 flex gap-4 text-[11px] text-white/55">
+      <div className="mb-3 flex gap-4 text-[11px] text-ink/65 dark:text-white/55">
         <span className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-signal" /> Visitors
         </span>
@@ -137,18 +137,18 @@ function TrendChart({ daily }: { daily: GaSummary["daily"] }) {
 function SetupGuide({ problem }: { problem?: string }) {
   return (
     <div className="glass mt-6 rounded-glass p-6">
-      <p className="flex items-center gap-2 font-display text-lg font-bold text-white">
+      <p className="flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
         <Settings2 size={18} className="text-signal" /> {problem ? "Google Analytics needs attention" : "Connect Google Analytics"}
       </p>
       {problem ? (
-        <p className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-300">{problem}</p>
+        <p className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">{problem}</p>
       ) : (
-        <p className="mt-2 text-sm text-white/60">
+        <p className="mt-2 text-sm text-ink/65 dark:text-white/60">
           Visitor numbers from Google Analytics appear here once the site has these settings (in the VPS <code>.env</code> and
           in Vercel):
         </p>
       )}
-      <ul className="mt-4 space-y-2 text-sm text-white/70">
+      <ul className="mt-4 space-y-2 text-sm text-ink/75 dark:text-white/70">
         <li>
           <code className="text-signal">NEXT_PUBLIC_GA_MEASUREMENT_ID</code> — starts with <code>G-</code>; turns on tracking.
         </li>
@@ -184,10 +184,10 @@ export default async function GoogleAnalyticsPage({ searchParams }: { searchPara
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-white">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink dark:text-white">
             <Activity size={22} className="text-signal" /> Google Analytics
           </h1>
-          <p className="mt-1 text-sm text-white/50">Visitors to buraaqtimes.com — visible to admins only.</p>
+          <p className="mt-1 text-sm text-ink/60 dark:text-white/50">Visitors to buraaqtimes.com — visible to admins only.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {data?.realtimeUsers !== null && data?.realtimeUsers !== undefined && (
@@ -195,13 +195,13 @@ export default async function GoogleAnalyticsPage({ searchParams }: { searchPara
               <Radio size={13} className="animate-pulse" /> {fmt(data.realtimeUsers)} on the site now
             </span>
           )}
-          <div className="flex rounded-full bg-white/5 p-1">
+          <div className="flex rounded-full bg-white/60 dark:bg-white/5 p-1">
             {RANGES.map((r) => (
               <Link
                 key={r}
                 href={`/cms/google-analytics?days=${r}`}
                 className={`focus-ring whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                  r === days ? "bg-signal text-white" : "text-white/55 hover:text-white"
+                  r === days ? "bg-signal text-black" : "text-ink/65 dark:text-white/55 hover:text-ink dark:hover:text-white"
                 }`}
               >
                 {r} days
@@ -245,12 +245,12 @@ export default async function GoogleAnalyticsPage({ searchParams }: { searchPara
           <div className="mt-4">
             <Card title="Most-read pages" icon={<Activity size={15} className="text-signal" />}>
               {data.topPages.length === 0 ? (
-                <p className="text-sm text-white/40">No data yet.</p>
+                <p className="text-sm text-ink/55 dark:text-white/40">No data yet.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full table-fixed text-sm">
                     <thead>
-                      <tr className="text-left text-[11px] uppercase tracking-wide text-white/35">
+                      <tr className="text-left text-[11px] uppercase tracking-wide text-ink/50 dark:text-white/35">
                         <th className="pb-2 font-medium">Page</th>
                         <th className="w-20 pb-2 text-right font-medium sm:w-24">Views</th>
                         <th className="w-20 pb-2 text-right font-medium sm:w-24">Visitors</th>
@@ -258,21 +258,21 @@ export default async function GoogleAnalyticsPage({ searchParams }: { searchPara
                     </thead>
                     <tbody>
                       {data.topPages.map((p) => (
-                        <tr key={p.path} className="border-t border-white/5">
+                        <tr key={p.path} className="border-t border-black/5 dark:border-white/5">
                           <td className="py-2.5 pr-3">
                             <a
                               href={`${SITE_URL}${p.path}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="group flex items-center gap-1.5 text-white/80 hover:text-white"
+                              className="group flex items-center gap-1.5 text-ink/85 dark:text-white/80 hover:text-ink dark:hover:text-white"
                             >
                               <span className="truncate">{p.title.replace(/\s*\|\s*Buraaq Times$/, "") || p.path}</span>
                               <ExternalLink size={12} className="shrink-0 opacity-0 transition group-hover:opacity-60" />
                             </a>
-                            <span className="block truncate text-[11px] text-white/30">{p.path}</span>
+                            <span className="block truncate text-[11px] text-ink/45 dark:text-white/30">{p.path}</span>
                           </td>
-                          <td className="py-2.5 text-right text-white/70">{fmt(p.views)}</td>
-                          <td className="py-2.5 text-right text-white/45">{fmt(p.users)}</td>
+                          <td className="py-2.5 text-right text-ink/75 dark:text-white/70">{fmt(p.views)}</td>
+                          <td className="py-2.5 text-right text-ink/55 dark:text-white/45">{fmt(p.users)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -297,7 +297,7 @@ export default async function GoogleAnalyticsPage({ searchParams }: { searchPara
             </Card>
           </div>
 
-          <p className="mt-6 text-xs text-white/30">
+          <p className="mt-6 text-xs text-ink/45 dark:text-white/30">
             From Google Analytics · refreshed every 5 minutes · last fetched{" "}
             {new Date(data.fetchedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Karachi" })} PKT.
             New visits can take up to a day to appear in these totals; &ldquo;on the site now&rdquo; is live.

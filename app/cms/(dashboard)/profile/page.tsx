@@ -46,11 +46,11 @@ export default function CmsProfilePage() {
     setTimeout(() => setSaved(false), 1500);
   };
 
-  if (!me) return <div className="text-white/40">Loading...</div>;
+  if (!me) return <div className="text-ink/55 dark:text-white/40">Loading...</div>;
 
   return (
     <div className="max-w-lg">
-      <h1 className="font-display text-2xl font-bold text-white">My Profile</h1>
+      <h1 className="font-display text-2xl font-bold text-ink dark:text-white">My Profile</h1>
 
       <div className="glass mt-5 space-y-4 rounded-glass p-6">
         <div className="flex items-center gap-3">
@@ -58,17 +58,17 @@ export default function CmsProfilePage() {
             {me.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
           </div>
           <div>
-            <p className="font-semibold text-white">{me.name}</p>
-            <p className="text-xs text-white/40">{me.email}</p>
+            <p className="font-semibold text-ink dark:text-white">{me.name}</p>
+            <p className="text-xs text-ink/55 dark:text-white/40">{me.email}</p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-white/10 px-2.5 py-1 text-white/60">{me.role}</span>
+          <span className="rounded-full bg-white/60 dark:bg-white/10 px-2.5 py-1 text-ink/65 dark:text-white/60">{me.role}</span>
           <span className="rounded-full bg-signal/20 px-2.5 py-1 text-signal">{me.status}</span>
           <span
             className={`flex items-center gap-1 rounded-full px-2.5 py-1 ${
-              me.emailVerified ? "bg-signal/20 text-signal" : "bg-amber-500/20 text-amber-400"
+              me.emailVerified ? "bg-signal/20 text-signal" : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
             }`}
           >
             {me.emailVerified ? <CheckCircle2 size={12} /> : <MailWarning size={12} />}
@@ -77,27 +77,27 @@ export default function CmsProfilePage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/50">Name</label>
+          <label className="mb-1 block text-xs font-medium text-ink/60 dark:text-white/50">Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="focus-ring w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none"
+            className="focus-ring w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-2.5 text-sm text-ink dark:text-white outline-none"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-white/50">Bio</label>
+          <label className="mb-1 block text-xs font-medium text-ink/60 dark:text-white/50">Bio</label>
           <textarea
             rows={3}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            className="focus-ring w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none"
+            className="focus-ring w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-2.5 text-sm text-ink dark:text-white outline-none"
           />
         </div>
 
         <button
           onClick={save}
           disabled={saving}
-          className="focus-ring flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          className="focus-ring flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saved ? "Saved" : "Save changes"}

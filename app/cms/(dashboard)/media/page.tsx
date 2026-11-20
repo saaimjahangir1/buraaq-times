@@ -75,13 +75,13 @@ export default function CmsMediaPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-white">Media Library</h1>
-          <p className="mt-1 text-sm text-white/50">{items.length} files</p>
+          <h1 className="font-display text-2xl font-bold text-ink dark:text-white">Media Library</h1>
+          <p className="mt-1 text-sm text-ink/60 dark:text-white/50">{items.length} files</p>
         </div>
         <button
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="focus-ring flex items-center gap-2 rounded-full bg-signal px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          className="focus-ring flex items-center gap-2 rounded-full bg-signal px-4 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
         >
           {uploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />}
           Bulk Upload
@@ -97,9 +97,9 @@ export default function CmsMediaPage() {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {loading && <p className="col-span-full text-sm text-white/40">Loading...</p>}
+        {loading && <p className="col-span-full text-sm text-ink/55 dark:text-white/40">Loading...</p>}
         {!loading && items.length === 0 && (
-          <p className="col-span-full text-sm text-white/40">No media yet — upload some above.</p>
+          <p className="col-span-full text-sm text-ink/55 dark:text-white/40">No media yet — upload some above.</p>
         )}
         {items.map((m) => (
           <div key={m.id} className="glass overflow-hidden rounded-glass">
@@ -107,12 +107,12 @@ export default function CmsMediaPage() {
               <Image src={m.url} alt={m.altText || ""} fill unoptimized className="object-cover" />
             </div>
             <div className="p-2.5">
-              <p className="truncate text-xs text-white/70">{m.filename}</p>
-              <p className="text-[10px] text-white/30">{(m.size / 1024).toFixed(0)} KB</p>
+              <p className="truncate text-xs text-ink/75 dark:text-white/70">{m.filename}</p>
+              <p className="text-[10px] text-ink/45 dark:text-white/30">{(m.size / 1024).toFixed(0)} KB</p>
               <div className="mt-1.5 flex gap-1">
                 <button
                   onClick={() => copy(m)}
-                  className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/5 py-1.5 text-[11px] text-white/60 hover:bg-white/10"
+                  className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-lg bg-white/60 dark:bg-white/5 py-1.5 text-[11px] text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10"
                 >
                   {copiedId === m.id ? <Check size={11} /> : <Copy size={11} />}
                   {copiedId === m.id ? "Copied" : "Copy URL"}
@@ -121,7 +121,7 @@ export default function CmsMediaPage() {
                   onClick={() => remove(m)}
                   disabled={deletingId === m.id}
                   aria-label={`Delete ${m.filename}`}
-                  className="focus-ring flex items-center justify-center rounded-lg bg-red-500/10 px-2.5 py-1.5 text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+                  className="focus-ring flex items-center justify-center rounded-lg bg-red-500/10 px-2.5 py-1.5 text-red-700 dark:text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
                 >
                   {deletingId === m.id ? (
                     <Loader2 size={12} className="animate-spin" />

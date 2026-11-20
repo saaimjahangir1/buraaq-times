@@ -28,10 +28,10 @@ type Patch = Partial<{ role: Role; status: Status; proofreaderStatus: Status | n
 function StateChip({ state }: { state: AccessState }) {
   const map = {
     APPROVED: "bg-signal/20 text-signal",
-    PENDING: "bg-amber-400/15 text-amber-300",
-    REJECTED: "bg-red-500/20 text-red-400",
+    PENDING: "bg-amber-400/15 text-amber-700 dark:text-amber-300",
+    REJECTED: "bg-red-500/20 text-red-700 dark:text-red-400",
   } as const;
-  if (!state) return <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase text-white/35">none</span>;
+  if (!state) return <span className="rounded-full bg-white/60 dark:bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase text-ink/50 dark:text-white/35">none</span>;
   return <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase ${map[state]}`}>{state.toLowerCase()}</span>;
 }
 
@@ -40,8 +40,8 @@ function Btn({ onClick, tone, children }: { onClick: () => void; tone: "ok" | "n
     tone === "ok"
       ? "bg-signal/20 text-signal hover:bg-signal/30"
       : tone === "no"
-      ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-      : "bg-white/5 text-white/60 hover:bg-white/10";
+      ? "bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-500/20"
+      : "bg-white/60 dark:bg-white/5 text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/10";
   return (
     <button onClick={onClick} className={`focus-ring flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium ${cls}`}>
       {children}
@@ -86,8 +86,8 @@ export default function CmsUsersPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white">Users</h1>
-      <p className="mt-1 text-sm text-white/50">
+      <h1 className="font-display text-2xl font-bold text-ink dark:text-white">Users</h1>
+      <p className="mt-1 text-sm text-ink/60 dark:text-white/50">
         Writer access and proofreader access are approved separately — one person can have both.
       </p>
 
@@ -97,7 +97,7 @@ export default function CmsUsersPage() {
             key={f}
             onClick={() => setFilter(f)}
             className={`focus-ring rounded-full px-3 py-1.5 text-xs font-medium transition ${
-              filter === f ? "bg-signal text-white" : "bg-white/5 text-white/50 hover:bg-white/10"
+              filter === f ? "bg-signal text-black" : "bg-white/60 dark:bg-white/5 text-ink/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             {f === "PENDING" ? "Needs approval" : "All"}
@@ -105,11 +105,11 @@ export default function CmsUsersPage() {
         ))}
       </div>
 
-      {error && <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-300">{error}</p>}
+      {error && <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
       <div className="mt-5 space-y-3">
-        {loading && <p className="text-sm text-white/40">Loading...</p>}
-        {!loading && visible.length === 0 && <p className="text-sm text-white/40">Nothing to show here.</p>}
+        {loading && <p className="text-sm text-ink/55 dark:text-white/40">Loading...</p>}
+        {!loading && visible.length === 0 && <p className="text-sm text-ink/55 dark:text-white/40">Nothing to show here.</p>}
         {visible.map((u) => {
           const w = writerState(u);
           const p = proofreaderState(u);
@@ -122,13 +122,13 @@ export default function CmsUsersPage() {
                     {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-white">{u.name}</p>
-                    <p className="truncate text-xs text-white/40">{u.email}</p>
+                    <p className="truncate font-medium text-ink dark:text-white">{u.name}</p>
+                    <p className="truncate text-xs text-ink/55 dark:text-white/40">{u.email}</p>
                   </div>
                 </div>
                 {!u.emailVerified && (
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-semibold uppercase text-amber-300">
+                    <span className="flex items-center gap-1 rounded-full bg-amber-400/15 px-2 py-1 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">
                       <MailWarning size={12} /> Email not verified
                     </span>
                     <Btn
@@ -165,18 +165,18 @@ export default function CmsUsersPage() {
                       </Btn>
                     </>
                   ) : (
-                    <span className="rounded-full bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase text-white/40">
+                    <span className="rounded-full bg-white/60 dark:bg-white/5 px-2 py-1 text-[10px] font-semibold uppercase text-ink/55 dark:text-white/40">
                       2FA set up at next sign-in
                     </span>
                   )}
                 </div>
-                {u._count.posts > 0 && <span className="text-xs text-white/30">{u._count.posts} posts</span>}
+                {u._count.posts > 0 && <span className="text-xs text-ink/45 dark:text-white/30">{u._count.posts} posts</span>}
               </div>
 
-              <div className="mt-4 grid gap-3 border-t border-white/5 pt-3 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 border-t border-black/5 dark:border-white/5 pt-3 md:grid-cols-2">
                 {/* Writer access */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="flex w-24 items-center gap-1.5 text-xs font-semibold text-white/50">
+                  <span className="flex w-24 items-center gap-1.5 text-xs font-semibold text-ink/60 dark:text-white/50">
                     <PenLine size={13} /> Writer
                   </span>
                   <Select
@@ -209,11 +209,11 @@ export default function CmsUsersPage() {
 
                 {/* Proofreader access */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="flex w-24 items-center gap-1.5 text-xs font-semibold text-white/50">
+                  <span className="flex w-24 items-center gap-1.5 text-xs font-semibold text-ink/60 dark:text-white/50">
                     <SpellCheck size={13} /> Proofreader
                   </span>
                   {isAdmin ? (
-                    <span className="text-xs text-white/40">Admins can always proofread</span>
+                    <span className="text-xs text-ink/55 dark:text-white/40">Admins can always proofread</span>
                   ) : (
                     <>
                       <StateChip state={p} />
@@ -245,14 +245,14 @@ export default function CmsUsersPage() {
                     </>
                   )}
                   {p === "APPROVED" && (
-                    <p className="flex basis-full items-center gap-1.5 text-[11px] text-white/35">
+                    <p className="flex basis-full items-center gap-1.5 text-[11px] text-ink/50 dark:text-white/35">
                       {u.emailVerified ? (
                         <>
                           <Mail size={12} className="text-signal" /> Gets “waiting for proofreading” emails
                         </>
                       ) : (
                         <>
-                          <MailWarning size={12} className="text-amber-300" /> No proofreading emails until their email is
+                          <MailWarning size={12} className="text-amber-700 dark:text-amber-300" /> No proofreading emails until their email is
                           verified
                         </>
                       )}
@@ -265,7 +265,7 @@ export default function CmsUsersPage() {
         })}
       </div>
 
-      <p className="mt-6 flex items-center gap-1.5 text-xs text-white/30">
+      <p className="mt-6 flex items-center gap-1.5 text-xs text-ink/45 dark:text-white/30">
         <ShieldAlert size={13} /> Changes take effect the next time that person loads a page. People with both kinds of
         access use the same email and password for the CMS and the proofreading desk.
       </p>

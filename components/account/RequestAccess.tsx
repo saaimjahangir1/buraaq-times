@@ -45,7 +45,7 @@ export default function RequestAccess({ kinds, area = "cms" }: { kinds: Kind[]; 
             type="button"
             onClick={() => request(k)}
             disabled={busy !== null}
-            className="lg-droplet focus-ring flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="lg-droplet focus-ring flex items-center gap-2 rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
           >
             {busy === k && <Loader2 size={15} className="animate-spin" />}
             {LABELS[k]}
@@ -53,7 +53,7 @@ export default function RequestAccess({ kinds, area = "cms" }: { kinds: Kind[]; 
         ))}
       </div>
       {message && (
-        <p className={`text-sm ${message.ok ? "text-signal" : "text-red-400"}`} role="status">
+        <p className={`text-sm ${message.ok ? "text-signal" : "text-red-700 dark:text-red-400"}`} role="status">
           {message.text}
         </p>
       )}

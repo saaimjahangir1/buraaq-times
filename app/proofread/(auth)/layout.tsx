@@ -1,6 +1,7 @@
 export default function ProofreadAuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+    // Sign-in pages keep their dark look whatever the CMS theme is.
+    <div className="dark relative flex min-h-screen items-center justify-center overflow-hidden bg-void px-4 text-white py-10">
       <div className="aurora">
         <div className="aurora-blob left-1/4 top-0 h-96 w-96 bg-signal" />
         <div className="aurora-blob right-1/4 bottom-0 h-96 w-96 bg-cyan" />

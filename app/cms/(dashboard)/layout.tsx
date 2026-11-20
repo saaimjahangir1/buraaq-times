@@ -19,9 +19,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="glass-strong max-w-md rounded-glass p-8 text-center">
           <MailWarning size={32} className="mx-auto text-signal" />
-          <h1 className="mt-4 font-display text-xl font-bold text-white">Verify your email</h1>
-          <p className="mt-2 text-sm text-white/60">
-            We sent a verification link to <span className="text-white/80">{user.email}</span>.
+          <h1 className="mt-4 font-display text-xl font-bold text-ink dark:text-white">Verify your email</h1>
+          <p className="mt-2 text-sm text-ink/65 dark:text-white/60">
+            We sent a verification link to <span className="text-ink/85 dark:text-white/80">{user.email}</span>.
             Confirm it to unlock the dashboard.
           </p>
           <div className="mt-6 flex flex-col items-center gap-3">
@@ -39,15 +39,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="glass-strong max-w-md rounded-glass p-8 text-center">
           <PenLine size={32} className="mx-auto text-signal" />
-          <h1 className="mt-4 font-display text-xl font-bold text-white">Want to write too?</h1>
-          <p className="mt-2 text-sm text-white/60">
+          <h1 className="mt-4 font-display text-xl font-bold text-ink dark:text-white">Want to write too?</h1>
+          <p className="mt-2 text-sm text-ink/65 dark:text-white/60">
             Your account is set up for proofreading. Ask for writer access and, once an admin approves it, you can
             sign in here with the same email and password to write and submit stories.
           </p>
           <div className="mt-6">
             <RequestAccess kinds={["NEWS_EDITOR", "ARTICLE_EDITOR"]} />
           </div>
-          <div className="mt-6 flex flex-col items-center gap-3 border-t border-white/10 pt-5">
+          <div className="mt-6 flex flex-col items-center gap-3 border-t border-black/10 dark:border-white/10 pt-5">
             {user.proofreader === "APPROVED" && (
               <Link href="/proofread" target="_blank" rel="noopener noreferrer" className="focus-ring text-sm font-semibold text-signal hover:underline">
                 Go to the proofreading desk
@@ -65,14 +65,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex min-h-screen items-center justify-center p-6">
         <div className="glass-strong max-w-md rounded-glass p-8 text-center">
           {user.status === "REJECTED" ? (
-            <ShieldAlert size={32} className="mx-auto text-red-400" />
+            <ShieldAlert size={32} className="mx-auto text-red-700 dark:text-red-400" />
           ) : (
             <Clock size={32} className="mx-auto text-signal" />
           )}
-          <h1 className="mt-4 font-display text-xl font-bold text-white">
+          <h1 className="mt-4 font-display text-xl font-bold text-ink dark:text-white">
             {user.status === "REJECTED" ? "Account not approved" : "Pending admin approval"}
           </h1>
-          <p className="mt-2 text-sm text-white/60">
+          <p className="mt-2 text-sm text-ink/65 dark:text-white/60">
             {user.status === "REJECTED"
               ? "An admin has declined this account. Contact your editorial admin if you believe this is a mistake."
               : `Your ${roleLabel(user.role)} access is waiting on admin approval before you can write. You'll get an email when it's approved.`}

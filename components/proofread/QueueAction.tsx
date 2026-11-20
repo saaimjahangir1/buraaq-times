@@ -53,8 +53,8 @@ export default function QueueAction({
 
   const cls =
     variant === "primary"
-      ? "bg-signal text-white shadow-glow hover:brightness-110"
-      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white";
+      ? "bg-signal text-black shadow-glow hover:brightness-110"
+      : "bg-white/60 dark:bg-white/5 text-ink/75 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/10 hover:text-ink dark:hover:text-white";
 
   return (
     <div className="flex flex-col items-end gap-1">
@@ -74,7 +74,7 @@ export default function QueueAction({
         {label ?? (action === "claim" ? "Claim & start" : "Release")}
         {action === "claim" && !busy && goToReview && <ArrowRight size={14} />}
       </button>
-      {error && <p className="max-w-[16rem] text-right text-xs text-red-400">{error}</p>}
+      {error && <p className="max-w-[16rem] text-right text-xs text-red-700 dark:text-red-400">{error}</p>}
     </div>
   );
 }

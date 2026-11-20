@@ -49,8 +49,8 @@ export default function CmsCategoriesPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white">Categories</h1>
-      <p className="mt-1 text-sm text-white/50">
+      <h1 className="font-display text-2xl font-bold text-ink dark:text-white">Categories</h1>
+      <p className="mt-1 text-sm text-ink/60 dark:text-white/50">
         Used across News and Articles for organization and navigation.
       </p>
 
@@ -60,17 +60,17 @@ export default function CmsCategoriesPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="New category name"
-            className="focus-ring flex-1 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none"
+            className="focus-ring flex-1 rounded-full border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-2.5 text-sm text-ink dark:text-white outline-none"
           />
           <button
             type="submit"
-            className="focus-ring flex items-center gap-1.5 rounded-full bg-signal px-4 py-2.5 text-sm font-semibold text-white"
+            className="focus-ring flex items-center gap-1.5 rounded-full bg-signal px-4 py-2.5 text-sm font-semibold text-black"
           >
             <Plus size={15} /> Add
           </button>
         </form>
       )}
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-700 dark:text-red-400">{error}</p>}
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((c) => (
@@ -79,12 +79,12 @@ export default function CmsCategoriesPage() {
               <FolderTree size={16} />
             </span>
             <div>
-              <p className="font-medium text-white">{c.name}</p>
-              <p className="text-xs text-white/40">{c._count.posts} posts</p>
+              <p className="font-medium text-ink dark:text-white">{c.name}</p>
+              <p className="text-xs text-ink/55 dark:text-white/40">{c._count.posts} posts</p>
             </div>
           </div>
         ))}
-        {categories.length === 0 && <p className="text-sm text-white/40">No categories yet.</p>}
+        {categories.length === 0 && <p className="text-sm text-ink/55 dark:text-white/40">No categories yet.</p>}
       </div>
     </div>
   );

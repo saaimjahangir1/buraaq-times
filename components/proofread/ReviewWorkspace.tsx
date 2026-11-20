@@ -66,7 +66,7 @@ interface FieldProps {
 type SaveState = { kind: "idle" } | { kind: "saving" } | { kind: "saved"; at: Date } | { kind: "error"; message: string };
 
 const fieldCls =
-  "focus-ring w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none placeholder:text-white/30 disabled:opacity-80";
+  "focus-ring w-full rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-3 text-ink dark:text-white outline-none placeholder:text-ink/45 dark:placeholder:text-white/30 disabled:opacity-80";
 
 export default function ReviewWorkspace({
   review,
@@ -140,7 +140,7 @@ export default function ReviewWorkspace({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none min-h-[420px] px-5 py-4 focus:outline-none prose-headings:font-display prose-a:text-signal",
+          "prose dark:prose-invert max-w-none min-h-[420px] px-5 py-4 focus:outline-none prose-headings:font-display prose-a:text-[rgb(var(--accent-ink))]",
       },
     },
     onUpdate: () => markDirty(),
@@ -305,24 +305,24 @@ export default function ReviewWorkspace({
         {/* State banner */}
         {canEdit ? (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-signal/30 bg-signal/10 px-4 py-3 text-sm">
-            <span className="flex items-center gap-2 text-white/80">
+            <span className="flex items-center gap-2 text-ink/85 dark:text-white/80">
               <SpellCheck size={16} className="text-signal" /> You have this claimed. Changes save automatically.
             </span>
-            <span className="text-xs text-white/50">
+            <span className="text-xs text-ink/60 dark:text-white/50">
               {save.kind === "saving"
                 ? "Saving…"
                 : save.kind === "saved"
                 ? `Saved ${save.at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
                 : save.kind === "error"
-                ? <span className="text-red-400">{save.message}</span>
+                ? <span className="text-red-700 dark:text-red-400">{save.message}</span>
                 : dirty
                 ? "Unsaved changes"
                 : `Claim: ${hoursLeft(claimExpiresAt(lastActivity))}`}
             </span>
           </div>
         ) : ownSubmission && review.status === "PENDING" ? (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70">
-            <Lock size={16} className="text-white/50" /> This is your own submission, so another proofreader will check
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-4 py-3 text-sm text-ink/75 dark:text-white/70">
+            <Lock size={16} className="text-ink/60 dark:text-white/50" /> This is your own submission, so another proofreader will check
             it. You can still read it here.
           </div>
         ) : canClaim ? (
@@ -331,13 +331,13 @@ export default function ReviewWorkspace({
             <button
               onClick={() => act("claim")}
               disabled={busy !== null}
-              className="focus-ring flex items-center gap-1.5 rounded-full bg-signal px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              className="focus-ring flex items-center gap-1.5 rounded-full bg-signal px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
             >
               {busy === "claim" ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />} Claim & start
             </button>
           </div>
         ) : review.status === "CLAIMED" ? (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-3 text-sm text-white/80">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-3 text-sm text-ink/85 dark:text-white/80">
             <Lock size={16} className="text-cyan" /> {review.claimedBy ?? "Another proofreader"} is proofreading this
             {review.claimedAt ? ` (since ${timeAgo(review.claimedAt)})` : ""}. You can read it, but not change it.
           </div>
@@ -345,10 +345,10 @@ export default function ReviewWorkspace({
           <div
             className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
               review.status === "APPROVED"
-                ? "border-signal/30 bg-signal/10 text-white/80"
+                ? "border-signal/30 bg-signal/10 text-ink/85 dark:text-white/80"
                 : review.status === "REJECTED"
-                ? "border-red-400/30 bg-red-500/10 text-white/80"
-                : "border-white/10 bg-white/5 text-white/60"
+                ? "border-red-400/30 bg-red-500/10 text-ink/85 dark:text-white/80"
+                : "border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 text-ink/65 dark:text-white/60"
             }`}
           >
             <p className="flex items-center gap-2 font-semibold">
@@ -358,28 +358,28 @@ export default function ReviewWorkspace({
                 </>
               ) : review.status === "REJECTED" ? (
                 <>
-                  <XCircle size={16} className="text-red-400" /> Returned by {review.claimedBy ?? "a proofreader"}
+                  <XCircle size={16} className="text-red-700 dark:text-red-400" /> Returned by {review.claimedBy ?? "a proofreader"}
                 </>
               ) : (
                 <>
                   <Undo2 size={16} /> Withdrawn by the editor
                 </>
               )}
-              {review.decidedAt ? <span className="font-normal text-white/40">· {timeAgo(review.decidedAt)}</span> : null}
+              {review.decidedAt ? <span className="font-normal text-ink/55 dark:text-white/40">· {timeAgo(review.decidedAt)}</span> : null}
             </p>
             {review.rejectReason && (
-              <p className="mt-2 whitespace-pre-line rounded-lg bg-black/20 px-3 py-2 text-white/75">{review.rejectReason}</p>
+              <p className="mt-2 whitespace-pre-line rounded-lg bg-black/20 px-3 py-2 text-ink/80 dark:text-white/75">{review.rejectReason}</p>
             )}
           </div>
         ) : null}
 
         {error && (
-          <p className="mb-4 flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+          <p className="mb-4 flex items-start gap-2 rounded-xl bg-red-500/10 px-4 py-2.5 text-sm text-red-700 dark:text-red-300">
             <AlertTriangle size={15} className="mt-0.5 shrink-0" /> {error}
           </p>
         )}
 
-        <label className="mb-1 block text-xs font-medium text-white/50">Headline</label>
+        <label className="mb-1 block text-xs font-medium text-ink/60 dark:text-white/50">Headline</label>
         <input
           value={title}
           disabled={!canEdit}
@@ -389,7 +389,7 @@ export default function ReviewWorkspace({
           }}
           className={`${fieldCls} mb-3 font-display text-xl font-bold`}
         />
-        <label className="mb-1 block text-xs font-medium text-white/50">Summary</label>
+        <label className="mb-1 block text-xs font-medium text-ink/60 dark:text-white/50">Summary</label>
         <textarea
           value={summary}
           disabled={!canEdit}
@@ -402,10 +402,10 @@ export default function ReviewWorkspace({
         />
 
         {canEdit && <EditorToolbar editor={editor} />}
-        <div className={`border border-white/10 bg-white/[0.02] ${canEdit ? "rounded-b-glass" : "rounded-glass"}`}>
+        <div className={`border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/[0.02] ${canEdit ? "rounded-b-glass" : "rounded-glass"}`}>
           <EditorContent editor={editor} />
         </div>
-        <p className="mt-2 text-right text-xs text-white/30">
+        <p className="mt-2 text-right text-xs text-ink/45 dark:text-white/30">
           {words.toLocaleString()} words · {Math.max(1, Math.round(words / 200))} min read
         </p>
       </div>
@@ -414,12 +414,12 @@ export default function ReviewWorkspace({
       <div className="space-y-5">
         {canEdit && (
           <div className="glass rounded-glass p-5">
-            <p className="mb-3 font-display text-sm font-bold text-white">Decision</p>
+            <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Decision</p>
             <div className="space-y-2">
               <button
                 onClick={approve}
                 disabled={busy !== null}
-                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-signal py-2.5 text-sm font-semibold text-white shadow-glow transition disabled:opacity-60"
+                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-signal py-2.5 text-sm font-semibold text-black shadow-glow transition disabled:opacity-60"
               >
                 {busy === "approve" ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
                 {review.targetStatus === "SCHEDULED" ? "Approve & schedule" : "Approve & publish"}
@@ -427,7 +427,7 @@ export default function ReviewWorkspace({
               <button
                 onClick={() => setShowReject(true)}
                 disabled={busy !== null}
-                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-red-500/15 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/25 disabled:opacity-60"
+                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-red-500/15 py-2.5 text-sm font-semibold text-red-700 dark:text-red-300 transition hover:bg-red-500/25 disabled:opacity-60"
               >
                 <XCircle size={15} /> Return to editor
               </button>
@@ -438,12 +438,12 @@ export default function ReviewWorkspace({
                   act("release");
                 }}
                 disabled={busy !== null}
-                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2 text-sm font-medium text-white/50 transition hover:bg-white/5 hover:text-white disabled:opacity-60"
+                className="focus-ring flex w-full items-center justify-center gap-2 rounded-full py-2 text-sm font-medium text-ink/60 dark:text-white/50 transition hover:bg-black/5 dark:hover:bg-white/5 hover:text-ink dark:hover:text-white disabled:opacity-60"
               >
                 {busy === "release" ? <Loader2 size={14} className="animate-spin" /> : <Unlock size={14} />} Release
               </button>
             </div>
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-white/35">
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-ink/50 dark:text-white/35">
               Your claim lasts 24 hours from your last save. Approving publishes your corrected version.
             </p>
           </div>
@@ -451,13 +451,13 @@ export default function ReviewWorkspace({
 
         {!canEdit && canRelease && (
           <div className="glass rounded-glass p-5">
-            <p className="mb-2 font-display text-sm font-bold text-white">Admin</p>
+            <p className="mb-2 font-display text-sm font-bold text-ink dark:text-white">Admin</p>
             <button
               onClick={() => {
                 if (confirm(`Take this away from ${review.claimedBy ?? "the proofreader"} and put it back in the queue?`)) act("release");
               }}
               disabled={busy !== null}
-              className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/10 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+              className="focus-ring flex w-full items-center justify-center gap-2 rounded-full bg-white/60 dark:bg-white/10 py-2.5 text-sm font-semibold text-ink dark:text-white disabled:opacity-60"
             >
               <Unlock size={15} /> Release claim
             </button>
@@ -465,7 +465,7 @@ export default function ReviewWorkspace({
         )}
 
         <div className="glass rounded-glass p-5 text-sm">
-          <p className="mb-3 font-display text-sm font-bold text-white">Details</p>
+          <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Details</p>
           <dl className="space-y-2">
             {[
               ["Type", typeLabel(post.type)],
@@ -474,13 +474,13 @@ export default function ReviewWorkspace({
               ["Submitted", timeAgo(review.createdAt)],
             ].map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3">
-                <dt className="text-white/40">{k}</dt>
-                <dd className="truncate text-right text-white/80">{v}</dd>
+                <dt className="text-ink/55 dark:text-white/40">{k}</dt>
+                <dd className="truncate text-right text-ink/85 dark:text-white/80">{v}</dd>
               </div>
             ))}
             <div className="flex justify-between gap-3">
-              <dt className="text-white/40">On approval</dt>
-              <dd className="text-right text-white/80">
+              <dt className="text-ink/55 dark:text-white/40">On approval</dt>
+              <dd className="text-right text-ink/85 dark:text-white/80">
                 {review.targetStatus === "SCHEDULED" && review.scheduledAt ? (
                   <span className="inline-flex items-center gap-1">
                     <CalendarClock size={13} /> {new Date(review.scheduledAt).toLocaleString()}
@@ -494,7 +494,7 @@ export default function ReviewWorkspace({
           {fields.tagNames.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {fields.tagNames.map((t) => (
-                <span key={t} className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-white/60">
+                <span key={t} className="rounded-full bg-white/60 dark:bg-white/5 px-2.5 py-1 text-xs text-ink/65 dark:text-white/60">
                   {t}
                 </span>
               ))}
@@ -504,8 +504,8 @@ export default function ReviewWorkspace({
 
         {review.isUpdate && (
           <div className="glass rounded-glass p-5 text-sm">
-            <p className="font-display text-sm font-bold text-white">Edit to a live post</p>
-            <p className="mt-1 text-white/55">
+            <p className="font-display text-sm font-bold text-ink dark:text-white">Edit to a live post</p>
+            <p className="mt-1 text-ink/65 dark:text-white/55">
               Readers see the current version until you approve.
               {changed.length > 0 ? " The editor changed:" : " No text changes — other details like images or SEO may differ."}
             </p>
@@ -533,7 +533,7 @@ export default function ReviewWorkspace({
 
         {(canEdit || featured.url) && (
           <div className="glass rounded-glass p-5">
-            <p className="mb-3 font-display text-sm font-bold text-white">Images</p>
+            <p className="mb-3 font-display text-sm font-bold text-ink dark:text-white">Images</p>
             {featured.url ? (
               <div className="relative aspect-video overflow-hidden rounded-xl">
                 <NextImage src={featured.url} alt={featured.alt} fill unoptimized className="object-cover" />
@@ -542,7 +542,7 @@ export default function ReviewWorkspace({
               <button
                 onClick={() => setPicking(true)}
                 disabled={!canEdit}
-                className="focus-ring flex aspect-video w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/20 text-sm text-white/50 transition hover:border-signal hover:text-white"
+                className="focus-ring flex aspect-video w-full flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-black/20 dark:border-white/20 text-sm text-ink/60 dark:text-white/50 transition hover:border-signal hover:text-ink dark:hover:text-white"
               >
                 <ImagePlus size={18} /> Add a featured image
               </button>
@@ -554,7 +554,7 @@ export default function ReviewWorkspace({
                   <button
                     onClick={() => setPicking(true)}
                     disabled={regenerating}
-                    className="focus-ring flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/10 py-2 text-xs font-semibold text-white transition hover:bg-white/15 disabled:opacity-50"
+                    className="focus-ring flex flex-1 items-center justify-center gap-1.5 rounded-full bg-white/60 dark:bg-white/10 py-2 text-xs font-semibold text-ink dark:text-white transition hover:bg-black/10 dark:hover:bg-white/15 disabled:opacity-50"
                   >
                     <ImagePlus size={13} /> Change image
                   </button>
@@ -562,7 +562,7 @@ export default function ReviewWorkspace({
                     onClick={removeImage}
                     disabled={regenerating}
                     aria-label="Remove the featured image"
-                    className="focus-ring flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs text-white/50 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                    className="focus-ring flex items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs text-ink/60 dark:text-white/50 transition hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
                   >
                     <ImageOff size={13} /> Remove
                   </button>
@@ -575,16 +575,16 @@ export default function ReviewWorkspace({
                   }}
                   placeholder="Alt text (describe the photo)"
                   maxLength={300}
-                  className="focus-ring mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white outline-none placeholder:text-white/30"
+                  className="focus-ring mt-2 w-full rounded-lg border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 text-xs text-ink dark:text-white outline-none placeholder:text-ink/45 dark:placeholder:text-white/30"
                 />
               </>
             )}
 
             {featured.url && (
-              <div className="mt-4 border-t border-white/10 pt-3">
-                <p className="mb-2 text-xs font-semibold text-white/60">Branded images</p>
+              <div className="mt-4 border-t border-black/10 dark:border-white/10 pt-3">
+                <p className="mb-2 text-xs font-semibold text-ink/65 dark:text-white/60">Branded images</p>
                 {regenerating ? (
-                  <div className="flex aspect-video items-center justify-center gap-2 rounded-lg bg-white/5 text-xs text-white/50">
+                  <div className="flex aspect-video items-center justify-center gap-2 rounded-lg bg-white/60 dark:bg-white/5 text-xs text-ink/60 dark:text-white/50">
                     <Loader2 size={14} className="animate-spin" /> Generating branded images…
                   </div>
                 ) : branded.hero ? (
@@ -593,19 +593,19 @@ export default function ReviewWorkspace({
                       <div className="relative aspect-video overflow-hidden rounded-lg">
                         <NextImage src={branded.hero} alt="Branded hero" fill unoptimized className="object-cover" />
                       </div>
-                      <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Hero (16:9)</p>
+                      <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-ink/45 dark:text-white/30">Hero (16:9)</p>
                     </div>
                     {branded.social && (
                       <div>
                         <div className="relative aspect-[4/5] overflow-hidden rounded-lg">
                           <NextImage src={branded.social} alt="Branded social" fill unoptimized className="object-cover" />
                         </div>
-                        <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-white/30">Social (4:5)</p>
+                        <p className="mt-1 text-center text-[10px] uppercase tracking-wide text-ink/45 dark:text-white/30">Social (4:5)</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-xs text-white/40">None yet — the site shows the plain photo until they&apos;re generated.</p>
+                  <p className="text-xs text-ink/55 dark:text-white/40">None yet — the site shows the plain photo until they&apos;re generated.</p>
                 )}
 
                 {canEdit && headlineChangedSinceImages && !regenerating && (
@@ -638,12 +638,12 @@ export default function ReviewWorkspace({
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
           <div className="glass-strong w-full max-w-lg rounded-glass p-5">
             <div className="mb-3 flex items-center justify-between">
-              <p className="font-display text-lg font-bold text-white">Return to the editor</p>
-              <button onClick={() => setShowReject(false)} className="focus-ring rounded-full p-1.5 text-white/50 hover:bg-white/10">
+              <p className="font-display text-lg font-bold text-ink dark:text-white">Return to the editor</p>
+              <button onClick={() => setShowReject(false)} className="focus-ring rounded-full p-1.5 text-ink/60 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/10">
                 <X size={18} />
               </button>
             </div>
-            <p className="text-sm text-white/55">
+            <p className="text-sm text-ink/65 dark:text-white/55">
               Tell {review.submittedBy.split(" ")[0]} what needs fixing. Your corrections so far go back with it
               {review.isUpdate ? ", and the live version stays as it is." : "."}
             </p>
@@ -658,14 +658,14 @@ export default function ReviewWorkspace({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setShowReject(false)}
-                className="focus-ring rounded-full px-4 py-2 text-sm text-white/60 hover:bg-white/5"
+                className="focus-ring rounded-full px-4 py-2 text-sm text-ink/65 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5"
               >
                 Cancel
               </button>
               <button
                 onClick={() => act("reject")}
                 disabled={busy !== null || reason.trim().length < 5}
-                className="focus-ring flex items-center gap-1.5 rounded-full bg-red-500/80 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="focus-ring flex items-center gap-1.5 rounded-full bg-red-500/80 px-4 py-2 text-sm font-semibold text-ink dark:text-white disabled:opacity-50"
               >
                 {busy === "reject" ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />} Return with note
               </button>

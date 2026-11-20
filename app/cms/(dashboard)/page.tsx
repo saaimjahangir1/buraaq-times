@@ -1,159 +1,181 @@
+import { redirect } from "next/navigation";
 import { canAccessType } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/current-user";
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { FileText, CheckCircle2, Clock, Archive, Users, MessageSquare, TrendingUp, SpellCheck } from "lucide-react";
+import DashboardView, { type DashboardData } from "@/components/cms/DashboardView";
 
-function StatCard({
-  icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number | string;
-  href?: string;
-}) {
-  const Comp = href ? Link : "div";
-  return (
-    <Comp
-      href={href as string}
-      className="glass rounded-glass p-5 transition hover:shadow-glow"
-    >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-signal/10 text-signal">
-        {icon}
-      </span>
-      <p className="mt-3 font-display text-2xl font-bold text-white">{value}</p>
-      <p className="text-sm text-white/50">{label}</p>
-    </Comp>
-  );
+// Days are counted in Pakistan time (UTC+5, no daylight saving).
+const PK_OFFSET_MS = 5 * 3600_000;
+const DAY_MS = 86_400_000;
+
+/** Monday 00:00 (Pakistan time) of the week containing `now`, as a real Date. */
+function weekStart(now: Date) {
+  const pk = new Date(now.getTime() + PK_OFFSET_MS);
+  const sinceMonday = (pk.getUTCDay() + 6) % 7;
+  return new Date(Date.UTC(pk.getUTCFullYear(), pk.getUTCMonth(), pk.getUTCDate() - sinceMonday) - PK_OFFSET_MS);
 }
+const pkDayIndex = (d: Date, start: Date) => Math.floor((d.getTime() - start.getTime()) / DAY_MS);
+const pkTime = (d: Date) => new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Karachi" }).format(d);
 
 export default async function CmsOverviewPage() {
   const me = await getCurrentUser();
   if (!me) redirect("/cms/login");
   const role = me.role;
-  const session = { sub: me.id, name: me.name };
+  const isAdmin = role === "ADMIN";
 
-  const typeFilter =
-    role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
+  // Editors see their own section (news or articles); admins see everything.
+  const typeFilter = role === "NEWS_EDITOR" ? { type: "news" } : role === "ARTICLE_EDITOR" ? { type: "article" } : {};
+  // Proofreading numbers: admins see the whole desk, writers their own submissions.
+  const mine = isAdmin ? {} : { submittedById: me.id };
+  const editHref = (p: { id: string; type: string }) => `/cms/${p.type === "news" ? "news" : "articles"}/${p.id}/edit`;
+  const sectionHref = role === "ARTICLE_EDITOR" ? "/cms/articles" : "/cms/news";
 
-  // Non-admins only ever see their own posts elsewhere in the CMS, so the
-  // "in review" counter is scoped the same way.
-  const ownFilter = role === "ADMIN" ? {} : { authorId: session.sub };
+  const now = new Date();
+  const start = weekStart(now);
+  const end = new Date(start.getTime() + 7 * DAY_MS);
+  const lastStart = new Date(start.getTime() - 7 * DAY_MS);
+  const monthAgo = new Date(now.getTime() - 30 * DAY_MS);
+  const twoWeeksAgo = new Date(now.getTime() - 14 * DAY_MS);
 
-  const [draft, published, scheduled, archived, recent, pendingUsers, pendingComments, inReview] =
-    await Promise.all([
-      prisma.post.count({ where: { ...typeFilter, status: "DRAFT" } }),
-      prisma.post.count({ where: { ...typeFilter, status: "PUBLISHED" } }),
-      prisma.post.count({ where: { ...typeFilter, status: "SCHEDULED" } }),
-      prisma.post.count({ where: { ...typeFilter, status: "ARCHIVED" } }),
-      prisma.post.findMany({
-        where: typeFilter,
-        orderBy: { updatedAt: "desc" },
-        take: 6,
-        include: { author: { select: { name: true } } },
-      }),
-      role === "ADMIN"
-        ? prisma.user.count({
-            where: {
-              OR: [
-                { status: "PENDING", role: { not: "PROOFREADER" } },
-                { proofreaderStatus: "PENDING" },
-                { role: "PROOFREADER", status: "PENDING", proofreaderStatus: null },
-              ],
-            },
-          })
-        : Promise.resolve(0),
-      role === "ADMIN"
-        ? prisma.comment.count({ where: { status: "PENDING" } })
-        : prisma.comment.count({ where: { status: "PENDING", post: { authorId: session.sub } } }),
-      prisma.postReview.count({
-        where: { status: { in: ["PENDING", "CLAIMED"] }, post: { ...typeFilter, ...ownFilter } },
-      }),
-    ]);
+  const [
+    published,
+    inReview,
+    drafts,
+    scheduled,
+    views,
+    comments,
+    weekPosts,
+    lastWeekCount,
+    top,
+    queue,
+    claimed,
+    oldest,
+    approved,
+    returned,
+    pendingUsers,
+    pendingComments,
+    myDrafts,
+    myReturned,
+    categories,
+    recent,
+  ] = await Promise.all([
+    prisma.post.count({ where: { ...typeFilter, status: "PUBLISHED" } }),
+    prisma.post.count({ where: { ...typeFilter, status: "IN_REVIEW" } }),
+    prisma.post.count({ where: { ...typeFilter, status: "DRAFT" } }),
+    prisma.post.count({ where: { ...typeFilter, status: "SCHEDULED" } }),
+    prisma.post.aggregate({ where: { ...typeFilter }, _sum: { views: true } }),
+    prisma.comment.count({ where: { status: "APPROVED", post: { ...typeFilter } } }),
+    // Published or scheduled within this week (Mon–Sun).
+    prisma.post.findMany({
+      where: {
+        ...typeFilter,
+        OR: [
+          { status: "PUBLISHED", publishedAt: { gte: start, lt: end } },
+          { status: "SCHEDULED", scheduledAt: { gte: start, lt: end } },
+        ],
+      },
+      select: { id: true, type: true, title: true, status: true, publishedAt: true, scheduledAt: true },
+      take: 200,
+    }),
+    prisma.post.count({ where: { ...typeFilter, status: "PUBLISHED", publishedAt: { gte: lastStart, lt: start } } }),
+    prisma.post.findMany({
+      where: { ...typeFilter, status: "PUBLISHED" },
+      orderBy: { views: "desc" },
+      take: 7,
+      select: { id: true, type: true, title: true, views: true },
+    }),
+    prisma.postReview.count({ where: { ...mine, status: { in: ["PENDING", "CLAIMED"] }, post: { ...typeFilter } } }),
+    prisma.postReview.count({ where: { ...mine, status: "CLAIMED", post: { ...typeFilter } } }),
+    prisma.postReview.findFirst({
+      where: { ...mine, status: "PENDING", post: { ...typeFilter } },
+      orderBy: { createdAt: "asc" },
+      select: { createdAt: true },
+    }),
+    prisma.postReview.count({ where: { ...mine, status: "APPROVED", decidedAt: { gte: monthAgo }, post: { ...typeFilter } } }),
+    prisma.postReview.count({ where: { ...mine, status: "REJECTED", decidedAt: { gte: monthAgo }, post: { ...typeFilter } } }),
+    isAdmin
+      ? prisma.user.count({
+          where: {
+            OR: [
+              { status: "PENDING", role: { not: "PROOFREADER" } },
+              { proofreaderStatus: "PENDING" },
+              { role: "PROOFREADER", status: "PENDING", proofreaderStatus: null },
+            ],
+          },
+        })
+      : Promise.resolve(0),
+    isAdmin ? prisma.comment.count({ where: { status: "PENDING" } }) : Promise.resolve(0),
+    prisma.post.count({ where: { ...typeFilter, authorId: me.id, status: "DRAFT" } }),
+    prisma.postReview.count({
+      where: { submittedById: me.id, status: "REJECTED", decidedAt: { gte: twoWeeksAgo }, post: { ...typeFilter, status: "DRAFT" } },
+    }),
+    prisma.category.findMany({
+      select: { name: true, _count: { select: { posts: { where: { ...typeFilter, status: "PUBLISHED" } } } } },
+    }),
+    prisma.post.findMany({
+      where: typeFilter,
+      orderBy: { updatedAt: "desc" },
+      take: 8,
+      include: { author: { select: { name: true } } },
+    }),
+  ]);
 
-  return (
-    <div>
-      <h1 className="font-display text-2xl font-bold text-white">
-        Welcome back, {session.name.split(" ")[0]}
-      </h1>
-      <p className="mt-1 text-sm text-white/50">Here&apos;s what&apos;s happening in the newsroom.</p>
+  // Week: bars and calendar.
+  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const todayIdx = pkDayIndex(now, start);
+  const days: DashboardData["calendar"]["days"] = DOW.map((dow, i) => {
+    const date = new Date(start.getTime() + i * DAY_MS + PK_OFFSET_MS);
+    return { key: dow, dow, date: date.getUTCDate(), today: i === todayIdx, items: [] };
+  });
+  const perDay = Array(7).fill(0) as number[];
+  const dated = weekPosts
+    .map((p) => ({ p, when: p.status === "PUBLISHED" ? p.publishedAt : p.scheduledAt }))
+    .filter((x): x is { p: (typeof weekPosts)[number]; when: Date } => Boolean(x.when))
+    .sort((a, b) => a.when.getTime() - b.when.getTime());
+  for (const { p, when } of dated) {
+    const i = pkDayIndex(when, start);
+    if (i < 0 || i > 6) continue;
+    if (p.status === "PUBLISHED") perDay[i]++;
+    days[i].items.push({ title: p.title, time: pkTime(when), live: p.status === "PUBLISHED", href: editHref(p) });
+  }
 
-      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={<FileText size={17} />} label="Drafts" value={draft} />
-        <StatCard icon={<CheckCircle2 size={17} />} label="Published" value={published} />
-        <StatCard icon={<Clock size={17} />} label="Scheduled" value={scheduled} />
-        <StatCard icon={<Archive size={17} />} label="Archived" value={archived} />
-        <StatCard icon={<SpellCheck size={17} />} label="With proofreaders" value={inReview} />
-        {role === "ADMIN" && (
-          <StatCard
-            icon={<Users size={17} />}
-            label="Pending user approvals"
-            value={pendingUsers}
-            href="/cms/users"
-          />
-        )}
-        <StatCard
-          icon={<MessageSquare size={17} />}
-          label="Comments to moderate"
-          value={pendingComments}
-          href="/cms/comments"
-        />
-      </div>
+  const firstDay = new Date(start.getTime() + PK_OFFSET_MS);
+  const lastDay = new Date(start.getTime() + 6 * DAY_MS + PK_OFFSET_MS);
+  const month = (d: Date) => d.toLocaleString("en-GB", { month: "long", timeZone: "UTC" });
+  const monthLabel =
+    month(firstDay) === month(lastDay) ? `${month(firstDay)} ${firstDay.getUTCFullYear()}` : `${month(firstDay).slice(0, 3)} – ${month(lastDay).slice(0, 3)} ${lastDay.getUTCFullYear()}`;
 
-      <div className="mt-8 glass rounded-glass p-5">
-        <p className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-white">
-          <TrendingUp size={17} className="text-signal" /> Recent activity
-        </p>
-        <div className="space-y-1">
-          {recent.length === 0 && <p className="text-sm text-white/40">Nothing here yet.</p>}
-          {recent.map((p: (typeof recent)[number]) => (
-            <Link
-              key={p.id}
-              href={`/cms/${p.type === "news" ? "news" : "articles"}/${p.id}/edit`}
-              className="focus-ring flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition hover:bg-white/5"
-            >
-              <span className="min-w-0 flex-1 truncate text-white/80">{p.title}</span>
-              <span className="shrink-0 text-xs text-white/40">{p.author.name}</span>
-              <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
-                  p.status === "PUBLISHED"
-                    ? "bg-signal/20 text-signal"
-                    : p.status === "SCHEDULED"
-                    ? "bg-cyan/20 text-cyan"
-                    : p.status === "ARCHIVED"
-                    ? "bg-white/10 text-white/50"
-                    : p.status === "IN_REVIEW"
-                    ? "bg-amber-400/15 text-amber-300"
-                    : "bg-white/10 text-white/60"
-                }`}
-              >
-                {p.status.replace("_", " ")}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
+  const todos: DashboardData["todos"] = [];
+  if (isAdmin) {
+    todos.push({ key: "people", label: "Approve new people", detail: pendingUsers ? `${pendingUsers} waiting for access` : "No one waiting", href: "/cms/users", count: pendingUsers });
+    todos.push({ key: "comments", label: "Moderate comments", detail: pendingComments ? `${pendingComments} to review` : "All caught up", href: "/cms/comments", count: pendingComments });
+  }
+  todos.push({ key: "returned", label: "Fix returned stories", detail: myReturned ? `${myReturned} came back with notes` : "Nothing returned", href: sectionHref, count: myReturned });
+  todos.push({ key: "drafts", label: "Finish your drafts", detail: myDrafts ? `${myDrafts} draft${myDrafts === 1 ? "" : "s"} in progress` : "No drafts open", href: sectionHref, count: myDrafts });
+  todos.push({ key: "review", label: isAdmin ? "Clear the proofreading queue" : "Stories with proofreaders", detail: queue ? `${queue} in the queue` : "Queue is empty", href: isAdmin ? "/proofread" : sectionHref, count: queue });
 
-      {(role === "ADMIN" || canAccessType(role, "news")) && (
-        <Link
-          href="/cms/news/new"
-          className="focus-ring mt-6 mr-3 inline-block rounded-full bg-signal px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          + New News Post
-        </Link>
-      )}
-      {(role === "ADMIN" || canAccessType(role, "article")) && (
-        <Link
-          href="/cms/articles/new"
-          className="focus-ring mt-6 inline-block rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white"
-        >
-          + New Article
-        </Link>
-      )}
-    </div>
-  );
+  const data: DashboardData = {
+    firstName: me.name.split(" ")[0] || me.name,
+    isAdmin,
+    canNews: isAdmin || canAccessType(role, "news"),
+    canArticle: isAdmin || canAccessType(role, "article"),
+    status: { published, inReview, drafts, scheduled },
+    totals: { published, views: views._sum.views ?? 0, comments },
+    week: perDay.map((count, i) => ({ label: DOW[i].slice(0, 1), count, today: i === todayIdx })),
+    weekTotal: perDay.reduce((a, b) => a + b, 0),
+    lastWeekTotal: lastWeekCount,
+    topStories: top.map((p) => ({ title: p.title, views: p.views, href: editHref(p) })),
+    queue: { count: queue, claimed, oldestMinutes: oldest ? Math.max(0, Math.round((now.getTime() - oldest.createdAt.getTime()) / 60_000)) : null },
+    passRate: { approved, returned, waiting: queue },
+    todos,
+    calendar: { monthLabel, days },
+    categories: categories
+      .map((c) => ({ name: c.name, count: c._count.posts }))
+      .filter((c) => c.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5),
+    recent: recent.map((p) => ({ id: p.id, title: p.title, author: p.author.name, status: p.status, href: editHref(p) })),
+  };
+
+  return <DashboardView d={data} />;
 }

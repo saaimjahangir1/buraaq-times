@@ -2,8 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, SpellCheck, LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, ListChecks, LogOut, SpellCheck } from "lucide-react";
 import BrandMark from "@/components/BrandMark";
+import ThemeToggle from "@/components/cms/ThemeToggle";
+
+// The desk's frame: the same frosted top pills and warm backdrop as the CMS.
+
+const pill =
+  "border border-white/70 bg-white/55 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]";
+const tab = "focus-ring flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-2 text-[13px] font-medium transition";
+const tabOn = "bg-ink text-white shadow-md dark:bg-white dark:text-ink";
+const tabOff = "text-ink/65 hover:bg-white/70 hover:text-ink dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white";
 
 export default function ProofreadShell({
   user,
@@ -26,51 +35,50 @@ export default function ProofreadShell({
     .split(" ")
     .map((n) => n[0])
     .join("")
-    .slice(0, 2);
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-void/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/proofread" className="flex min-w-0 items-center gap-2">
-            <BrandMark width={104} height={31} />
-            <span className="hidden items-center gap-1 rounded-full bg-signal/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-signal sm:flex">
-              <SpellCheck size={12} /> Proofreading
+    <div className="relative min-h-screen">
+      <div className="cms-backdrop" aria-hidden="true" />
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-5 sm:pt-4">
+        <div className="mx-auto flex max-w-[1500px] items-center gap-2">
+          <Link href="/proofread" className={`${pill} focus-ring flex h-11 min-w-0 items-center gap-2 rounded-full pl-4 pr-3`}>
+            <BrandMark idle={false} className="aspect-[423/125] h-[26px] brightness-0 dark:brightness-100" />
+            <span className="hidden items-center gap-1 rounded-full bg-signal px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-black sm:flex">
+              <SpellCheck size={12} /> Desk
             </span>
           </Link>
-          <div className="flex shrink-0 items-center gap-2">
-            {pathname !== "/proofread" && (
-              <Link
-                href="/proofread"
-                className="focus-ring hidden rounded-full px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white sm:block"
-              >
-                Queue
-              </Link>
-            )}
-            {(user.isAdmin || user.canWrite) && (
+
+          <nav aria-label="Desk" className={`${pill} ml-auto flex items-center gap-0.5 rounded-full p-1`}>
+            <Link href="/proofread" aria-current={pathname === "/proofread" ? "page" : undefined} className={`${tab} ${pathname === "/proofread" ? tabOn : tabOff}`}>
+              <ListChecks size={15} /> <span className="hidden sm:inline">Queue</span>
+            </Link>
+            {user.isAdmin || user.canWrite ? (
               <Link
                 href="/cms"
                 // New tab: the CMS has its own sign-in, and the desk stays open here.
                 target="_blank"
                 rel="noopener noreferrer"
-                className="focus-ring flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-white/60 hover:bg-white/5 hover:text-white"
+                className={`${tab} ${tabOff}`}
               >
                 <LayoutDashboard size={15} /> <span className="hidden sm:inline">CMS</span>
               </Link>
-            )}
-            <div className="flex items-center gap-2 rounded-full bg-white/5 py-1 pl-1 pr-1.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-signal to-cyanDeep text-[11px] font-bold text-white">
-                {initials}
-              </span>
-              <span className="hidden max-w-[10rem] truncate text-sm text-white/80 sm:block">{user.name}</span>
-              <button
-                onClick={logout}
-                aria-label="Sign out"
-                className="focus-ring rounded-full p-1.5 text-white/40 transition hover:bg-white/10 hover:text-white"
-              >
-                <LogOut size={15} />
-              </button>
-            </div>
+            ) : null}
+          </nav>
+
+          <ThemeToggle />
+          <div className={`${pill} flex h-11 shrink-0 items-center gap-2 rounded-full pl-1.5 pr-1.5`}>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-signal text-[11px] font-bold text-black">{initials}</span>
+            <span className="hidden max-w-[10rem] truncate text-sm font-medium text-ink/80 dark:text-white/80 md:block">{user.name}</span>
+            <button
+              onClick={logout}
+              aria-label="Sign out"
+              title="Sign out"
+              className="focus-ring rounded-full p-2 text-ink/50 transition hover:bg-black/5 hover:text-ink dark:text-white/45 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
         </div>
       </header>

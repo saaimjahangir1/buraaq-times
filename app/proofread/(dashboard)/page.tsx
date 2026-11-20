@@ -29,9 +29,9 @@ function loadOpen() {
 
 function Chip({ children, tone = "plain" }: { children: React.ReactNode; tone?: "plain" | "signal" | "amber" | "cyan" }) {
   const tones = {
-    plain: "bg-white/10 text-white/60",
+    plain: "bg-white/60 dark:bg-white/10 text-ink/65 dark:text-white/60",
     signal: "bg-signal/15 text-signal",
-    amber: "bg-amber-400/15 text-amber-300",
+    amber: "bg-amber-400/15 text-amber-700 dark:text-amber-300",
     cyan: "bg-cyan/15 text-cyan",
   };
   return (
@@ -65,11 +65,11 @@ function ItemCard({ item, right, now }: { item: QueueItem; right: React.ReactNod
             </Chip>
           )}
         </div>
-        <p className="mt-2 line-clamp-2 font-display text-lg font-bold leading-snug text-white">{item.title}</p>
-        <p className="mt-1 line-clamp-2 text-sm text-white/55">{item.summary}</p>
-        <p className="mt-2 text-xs text-white/40">
+        <p className="mt-2 line-clamp-2 font-display text-lg font-bold leading-snug text-ink dark:text-white">{item.title}</p>
+        <p className="mt-1 line-clamp-2 text-sm text-ink/65 dark:text-white/55">{item.summary}</p>
+        <p className="mt-2 text-xs text-ink/55 dark:text-white/40">
           By {item.submittedBy.name} · submitted{" "}
-          <span className={item.status === "PENDING" && waitingHours > 12 ? "font-semibold text-amber-300" : ""}>
+          <span className={item.status === "PENDING" && waitingHours > 12 ? "font-semibold text-amber-700 dark:text-amber-300" : ""}>
             {timeAgo(item.createdAt, now)}
           </span>{" "}
           · {words.toLocaleString()} words · {Math.max(1, Math.round(words / 200))} min read
@@ -93,9 +93,9 @@ function Section({
 }) {
   return (
     <section className="mt-8">
-      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-white">
+      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-bold text-ink dark:text-white">
         {icon} {title}
-        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white/60">{count}</span>
+        <span className="rounded-full bg-white/60 dark:bg-white/10 px-2 py-0.5 text-xs font-semibold text-ink/65 dark:text-white/60">{count}</span>
       </h2>
       <div className="space-y-3">{children}</div>
     </section>
@@ -145,10 +145,10 @@ export default async function ProofreadQueuePage({
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white sm:text-3xl">
+      <h1 className="font-display text-2xl font-bold text-ink dark:text-white sm:text-3xl">
         {waiting.length === 0 && mine.length === 0 ? "All caught up" : "Proofreading queue"}
       </h1>
-      <p className="mt-1 text-sm text-white/50">
+      <p className="mt-1 text-sm text-ink/60 dark:text-white/50">
         Claim a piece to lock it for yourself, correct it, then approve it to publish or return it to the editor.
       </p>
 
@@ -158,8 +158,8 @@ export default async function ProofreadQueuePage({
             flash.tone === "signal"
               ? "bg-signal/10 text-signal"
               : flash.tone === "red"
-              ? "bg-red-500/10 text-red-300"
-              : "bg-white/5 text-white/70"
+              ? "bg-red-500/10 text-red-700 dark:text-red-300"
+              : "bg-white/60 dark:bg-white/5 text-ink/75 dark:text-white/70"
           }`}
         >
           <CheckCircle2 size={16} className="shrink-0" /> {flash.text}
@@ -179,8 +179,8 @@ export default async function ProofreadQueuePage({
         ].map((s) => (
           <div key={s.label} className="glass rounded-glass p-4">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-signal/10 text-signal">{s.icon}</span>
-            <p className="mt-2 font-display text-2xl font-bold text-white">{s.value}</p>
-            <p className="text-xs text-white/50">{s.label}</p>
+            <p className="mt-2 font-display text-2xl font-bold text-ink dark:text-white">{s.value}</p>
+            <p className="text-xs text-ink/60 dark:text-white/50">{s.label}</p>
           </div>
         ))}
       </div>
@@ -196,11 +196,11 @@ export default async function ProofreadQueuePage({
                 <div className="flex flex-col items-stretch gap-2 sm:items-end">
                   <Link
                     href={`/proofread/review/${r.id}`}
-                    className="focus-ring flex items-center justify-center gap-1.5 rounded-full bg-signal px-4 py-2 text-sm font-semibold text-white shadow-glow"
+                    className="focus-ring flex items-center justify-center gap-1.5 rounded-full bg-signal px-4 py-2 text-sm font-semibold text-black shadow-glow"
                   >
                     Continue <ArrowRight size={14} />
                   </Link>
-                  <span className="text-center text-[11px] text-white/40 sm:text-right">
+                  <span className="text-center text-[11px] text-ink/55 dark:text-white/40 sm:text-right">
                     Claim: {hoursLeft(claimExpiresAt(r.lastActivityAt), now)}
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export default async function ProofreadQueuePage({
 
       <Section icon={<Inbox size={18} className="text-signal" />} title="Waiting for a proofreader" count={waiting.length}>
         {waiting.length === 0 ? (
-          <div className="glass rounded-glass p-6 text-center text-sm text-white/50">
+          <div className="glass rounded-glass p-6 text-center text-sm text-ink/60 dark:text-white/50">
             Nothing is waiting. You&apos;ll get an email as soon as an editor submits something.
           </div>
         ) : (
@@ -223,7 +223,7 @@ export default async function ProofreadQueuePage({
               now={now}
               right={
                 r.submittedById === me.id ? (
-                  <span className="rounded-full bg-white/5 px-3 py-2 text-xs font-semibold text-white/50">
+                  <span className="rounded-full bg-white/60 dark:bg-white/5 px-3 py-2 text-xs font-semibold text-ink/60 dark:text-white/50">
                     Your submission
                   </span>
                 ) : (
@@ -244,8 +244,8 @@ export default async function ProofreadQueuePage({
                   <Chip tone="signal">{typeLabel(r.post.type)}</Chip>
                   {r.isUpdate && <Chip tone="cyan">Edit to live post</Chip>}
                 </div>
-                <p className="mt-1.5 truncate font-medium text-white/85">{r.title}</p>
-                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-white/45">
+                <p className="mt-1.5 truncate font-medium text-ink/85 dark:text-white/85">{r.title}</p>
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/55 dark:text-white/45">
                   <Lock size={12} className="text-cyan" /> {r.claimedBy?.name ?? "Someone"} has it ·{" "}
                   {r.claimedAt ? `since ${timeAgo(r.claimedAt, now)}` : ""} · releases automatically in{" "}
                   {hoursLeft(claimExpiresAt(r.lastActivityAt), now).replace(" left", "")}
@@ -261,27 +261,27 @@ export default async function ProofreadQueuePage({
 
       {finished.length > 0 && (
         <Section
-          icon={<Clock size={18} className="text-white/50" />}
+          icon={<Clock size={18} className="text-ink/60 dark:text-white/50" />}
           title={isAdmin ? "Recently decided" : "Recently finished by you"}
           count={finished.length}
         >
-          <div className="glass divide-y divide-white/5 rounded-glass">
+          <div className="glass divide-y divide-black/5 dark:divide-white/5 rounded-glass">
             {finished.map((r) => (
               <Link
                 key={r.id}
                 href={`/proofread/review/${r.id}`}
-                className="focus-ring flex items-center gap-3 px-4 py-3 text-sm transition hover:bg-white/[0.03]"
+                className="focus-ring flex items-center gap-3 px-4 py-3 text-sm transition hover:bg-black/5 dark:hover:bg-white/[0.03]"
               >
                 {r.status === "APPROVED" ? (
                   <CheckCircle2 size={16} className="shrink-0 text-signal" />
                 ) : (
-                  <XCircle size={16} className="shrink-0 text-red-400" />
+                  <XCircle size={16} className="shrink-0 text-red-700 dark:text-red-400" />
                 )}
-                <span className="min-w-0 flex-1 truncate text-white/80">{r.title}</span>
+                <span className="min-w-0 flex-1 truncate text-ink/85 dark:text-white/80">{r.title}</span>
                 {isAdmin && r.claimedBy && (
-                  <span className="hidden shrink-0 text-xs text-white/40 sm:block">{r.claimedBy.name}</span>
+                  <span className="hidden shrink-0 text-xs text-ink/55 dark:text-white/40 sm:block">{r.claimedBy.name}</span>
                 )}
-                <span className="shrink-0 text-xs text-white/40">{r.decidedAt ? timeAgo(r.decidedAt, now) : ""}</span>
+                <span className="shrink-0 text-xs text-ink/55 dark:text-white/40">{r.decidedAt ? timeAgo(r.decidedAt, now) : ""}</span>
               </Link>
             ))}
           </div>
