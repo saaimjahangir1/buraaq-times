@@ -65,8 +65,8 @@ const tabOn = "bg-ink text-white shadow-md dark:bg-white dark:text-ink";
 const tabOff = "text-ink/65 hover:bg-white/70 hover:text-ink dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white";
 
 /** Closes a popover on outside click / Escape. */
-function useDismiss(open: boolean, close: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
+function useDismiss<T extends HTMLElement = HTMLDivElement>(open: boolean, close: () => void) {
+  const ref = useRef<T>(null);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && close();
@@ -101,7 +101,8 @@ export default function CmsShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [meOpen, setMeOpen] = useState(false);
-  const moreRef = useDismiss(moreOpen, () => setMoreOpen(false));
+  // The ref wraps the whole tab bar, so the More button AND its menu count as "inside".
+  const moreRef = useDismiss<HTMLElement>(moreOpen, () => setMoreOpen(false));
   const meRef = useDismiss(meOpen, () => setMeOpen(false));
 
   // Close menus when the page changes.
@@ -144,7 +145,7 @@ export default function CmsShell({
           </Link>
 
           {/* Page tabs (wide screens) */}
-          <nav aria-label="CMS sections" className="ml-auto hidden min-w-0 lg:flex">
+          <nav ref={moreRef} aria-label="CMS sections" className="ml-auto hidden min-w-0 lg:flex">
             <div className={`${pill} no-scrollbar flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-full p-1`}>
               {main.map((item) => (
                 <Link key={item.href} href={item.href} aria-current={isActive(item.href) ? "page" : undefined} className={`${tabBase} ${isActive(item.href) ? tabOn : tabOff}`}>
@@ -152,7 +153,7 @@ export default function CmsShell({
                 </Link>
               ))}
               {more.length ? (
-                <div ref={moreRef} style={{ position: "relative" }}>
+                <div style={{ position: "relative" }}>
                   <button
                     type="button"
                     aria-expanded={moreOpen}

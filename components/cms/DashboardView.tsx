@@ -62,7 +62,7 @@ function CardTitle({ children, href, right }: { children: React.ReactNode; href?
   );
 }
 
-function Dial({ minutes }: { minutes: number | null }) {
+function Dial({ minutes, checking }: { minutes: number | null; checking: number }) {
   // A full ring = 4 hours, when the desk sends its "still waiting" reminder.
   const pct = minutes === null ? 0 : Math.min(1, minutes / 240);
   const r = 46;
@@ -77,11 +77,11 @@ function Dial({ minutes }: { minutes: number | null }) {
           const a = (i / 48) * 2 * Math.PI;
           return <line key={i} x1={60 + 56 * Math.cos(a)} y1={60 + 56 * Math.sin(a)} x2={60 + 58.5 * Math.cos(a)} y2={60 + 58.5 * Math.sin(a)} strokeWidth="1" className="stroke-black/15 dark:stroke-white/15" />;
         })}
-        <circle cx="60" cy="60" r={r} fill="none" strokeWidth="9" strokeLinecap="round" stroke="rgb(var(--accent))" strokeDasharray={`${c * pct} ${c}`} />
+        {pct > 0 ? <circle cx="60" cy="60" r={r} fill="none" strokeWidth="9" strokeLinecap="round" stroke="rgb(var(--accent))" strokeDasharray={`${c * pct} ${c}`} /> : null}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className={`text-[26px] font-light leading-none tracking-tight ${strong}`}>{label}</span>
-        <span className={`mt-1 text-[11px] ${soft}`}>{minutes === null ? "queue is empty" : "oldest waiting"}</span>
+        <span className={`mt-1 text-[11px] ${soft}`}>{minutes !== null ? "oldest waiting" : checking ? "none waiting" : "queue is empty"}</span>
       </div>
     </div>
   );
@@ -170,7 +170,7 @@ export default function DashboardView({ d }: { d: DashboardData }) {
           {segments.map((x) => {
             const pct = Math.round((x.value / statusTotal) * 100);
             return (
-              <div key={x.label} className="min-w-[88px]" style={{ flexGrow: Math.max(x.value, statusTotal * 0.08), flexBasis: 0 }}>
+              <div key={x.label} className="min-w-[80px] sm:min-w-[88px]" style={{ flexGrow: Math.max(x.value, statusTotal * 0.08), flexBasis: 0 }}>
                 <p className={`mb-1.5 truncate text-xs ${soft}`}>
                   {x.label} · {x.value}
                 </p>
@@ -184,7 +184,8 @@ export default function DashboardView({ d }: { d: DashboardData }) {
       ) : null}
 
       {/* Cards */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-12">
+      {/* grid-cols-1 + min-w-0: on phones a wide card (the week calendar) must scroll inside itself, not stretch the page */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12 [&>*]:min-w-0">
         {/* This week */}
         <section className={`${card} xl:col-span-3`}>
           <div className="flex items-start justify-between">
@@ -197,13 +198,14 @@ export default function DashboardView({ d }: { d: DashboardData }) {
               {trend} vs last week
             </span>
           </div>
-          <div className="mt-5 flex h-[118px] items-end justify-between gap-2">
+          <div className="relative mt-4 flex h-[104px] items-end justify-between gap-2 sm:mt-5 sm:h-[118px]">
+            {d.weekTotal === 0 ? <p className={`absolute inset-x-0 top-6 text-center text-xs ${soft}`}>Nothing published yet this week</p> : null}
             {d.week.map((w) => (
               <div key={w.label} className="flex flex-1 flex-col items-center gap-1.5">
                 <span className={`text-[10px] font-semibold ${w.count ? strong : soft}`}>{w.count || ""}</span>
                 <div
                   className={`w-full max-w-[26px] rounded-full ${w.today ? "bg-signal" : w.count ? "bg-ink/85 dark:bg-white/85" : "bg-black/[0.07] dark:bg-white/10"}`}
-                  style={{ height: `${w.count ? 34 + (w.count / weekMax) * 52 : 22}px` }}
+                  style={{ height: `${w.count ? 30 + (w.count / weekMax) * 46 : 6}px` }}
                   title={`${w.label}: ${w.count}`}
                 />
                 <span className={`text-[10px] ${w.today ? "font-bold text-ink dark:text-white" : soft}`}>{w.label}</span>
@@ -242,9 +244,9 @@ export default function DashboardView({ d }: { d: DashboardData }) {
         {/* Proofreading dial */}
         <section className={`${card} xl:col-span-3`}>
           <CardTitle href="/proofread">Proofreading</CardTitle>
-          <Dial minutes={d.queue.oldestMinutes} />
+          <Dial minutes={d.queue.oldestMinutes} checking={d.queue.claimed} />
           <div className="mt-3 flex items-center justify-center gap-2 text-xs">
-            <span className="rounded-full bg-ink px-2.5 py-1 font-semibold text-white dark:bg-white dark:text-ink">{d.queue.count} waiting</span>
+            <span className="rounded-full bg-ink px-2.5 py-1 font-semibold text-white dark:bg-white dark:text-ink">{Math.max(0, d.queue.count - d.queue.claimed)} waiting</span>
             <span className="rounded-full border border-black/10 px-2.5 py-1 font-semibold text-ink/70 dark:border-white/15 dark:text-white/70">{d.queue.claimed} being checked</span>
           </div>
         </section>
@@ -260,7 +262,7 @@ export default function DashboardView({ d }: { d: DashboardData }) {
             <div className="mt-3 flex flex-wrap gap-1.5 text-center text-[11px] font-semibold">
               <span className="flex-1 whitespace-nowrap rounded-full bg-signal px-2.5 py-1.5 text-black">{d.passRate.approved} approved</span>
               <span className="flex-1 whitespace-nowrap rounded-full bg-ink px-2.5 py-1.5 text-white dark:bg-white dark:text-ink">{d.passRate.returned} returned</span>
-              <span className="flex-1 whitespace-nowrap rounded-full border border-black/10 px-2.5 py-1.5 text-ink/70 dark:border-white/15 dark:text-white/70">{d.passRate.waiting} waiting</span>
+              <span className="flex-1 whitespace-nowrap rounded-full border border-black/10 px-2.5 py-1.5 text-ink/70 dark:border-white/15 dark:text-white/70">{d.passRate.waiting} in queue</span>
             </div>
           </section>
 
@@ -369,7 +371,7 @@ export default function DashboardView({ d }: { d: DashboardData }) {
         <section className={`${card} md:col-span-2 xl:col-span-12`}>
           <CardTitle>Recent activity</CardTitle>
           {d.recent.length === 0 ? <p className={`text-sm ${soft}`}>Nothing here yet.</p> : null}
-          <div className="grid gap-1 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 md:grid-cols-2">
             {d.recent.map((p) => (
               <Link key={p.id} href={p.href} className="focus-ring group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition hover:bg-white/60 dark:hover:bg-white/[0.06]">
                 <span className={`min-w-0 flex-1 truncate ${strong}`}>{p.title}</span>
@@ -379,8 +381,13 @@ export default function DashboardView({ d }: { d: DashboardData }) {
               </Link>
             ))}
           </div>
-          <p className={`mt-2 flex items-center gap-1.5 text-[11px] ${soft}`}>
-            <Eye size={12} /> Views count every reader who opens a story. <CheckCircle2 size={12} className="ml-2" /> Proofreading numbers include only stories you can see.
+          <p className={`mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] ${soft}`}>
+            <span className="flex items-center gap-1.5">
+              <Eye size={12} className="shrink-0" /> Views count every reader who opens a story.
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={12} className="shrink-0" /> Proofreading numbers include only stories you can see.
+            </span>
           </p>
         </section>
       </div>

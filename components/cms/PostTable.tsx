@@ -102,8 +102,10 @@ export default function PostTable({ type }: { type: "news" | "article" }) {
         </div>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-glass border border-black/10 dark:border-white/10">
-        <table className="w-full text-left text-sm">
+      {/* Wide table: swipes sideways on small screens instead of being cut off. */}
+      <p className="mt-4 text-[11px] text-ink/50 dark:text-white/40 md:hidden">Swipe the table sideways to see every column.</p>
+      <div className="mt-2 overflow-x-auto overscroll-x-contain rounded-glass border border-black/10 dark:border-white/10 md:mt-5">
+        <table className="w-full min-w-[820px] text-left text-sm">
           <thead className="bg-white/60 dark:bg-white/[0.03] text-xs uppercase tracking-wide text-ink/55 dark:text-white/40">
             <tr>
               <th className="px-4 py-3 font-medium">Title</th>
@@ -132,10 +134,10 @@ export default function PostTable({ type }: { type: "news" | "article" }) {
             )}
             {posts.map((p) => (
               <tr key={p.id} className="transition hover:bg-black/5 dark:hover:bg-white/[0.03]">
-                <td className="max-w-xs truncate px-4 py-3 text-ink/90 dark:text-white/90">{p.title}</td>
-                <td className="px-4 py-3 text-ink/60 dark:text-white/50">{p.category?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-ink/60 dark:text-white/50">{p.author.name}</td>
-                <td className="px-4 py-3">
+                <td className="max-w-[280px] truncate px-4 py-3 text-ink/90 dark:text-white/90" title={p.title}>{p.title}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-ink/60 dark:text-white/50">{p.category?.name ?? "—"}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-ink/60 dark:text-white/50">{p.author.name}</td>
+                <td className="whitespace-nowrap px-4 py-3">
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
                       p.status === "PUBLISHED"
